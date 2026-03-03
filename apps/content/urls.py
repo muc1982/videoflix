@@ -5,6 +5,7 @@ This module defines all URL patterns for video endpoints.
 """
 from django.urls import path
 
+from .legal_views import ImprintView, PrivacyPolicyView
 from .views import HLSManifestView, HLSSegmentView, VideoListView
 
 urlpatterns = [
@@ -19,4 +20,7 @@ urlpatterns = [
         HLSSegmentView.as_view(),
         name='hls_segment'
     ),
+    # Legal pages
+    path('privacy/', PrivacyPolicyView.as_view(), name='privacy_policy'),
+    path('imprint/', ImprintView.as_view(), name='imprint'),
 ]
