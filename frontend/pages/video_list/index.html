@@ -6,30 +6,30 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Videoflix</title>
 
-    <link rel="stylesheet" href="/shared/css/variables.css">
-    <link rel="stylesheet" href="/shared/css/standard.css">
-    <link rel="stylesheet" href="/shared/css/fonts.css">
-    <link rel="stylesheet" href="/shared/css/assets.css">
-    <link rel="stylesheet" href="/shared/css/header_footer.css">
+    <link rel="stylesheet" href="../../shared/css/variables.css">
+    <link rel="stylesheet" href="../../shared/css/standard.css">
+    <link rel="stylesheet" href="../../shared/css/fonts.css">
+    <link rel="stylesheet" href="../../shared/css/assets.css">
+    <link rel="stylesheet" href="../../shared/css/header_footer.css">
     <link rel="stylesheet" href="/styles.css">
     <link rel="stylesheet" href="./video_list.css">
-    <link rel="stylesheet" href="/shared/css/toast_msg.css">
-    <link rel="icon" href="/assets/icons/logo_icon_small.svg" type="image/svg+xml">
+    <link rel="stylesheet" href="../../shared/css/toast_msg.css">
+    <link rel="icon" href="../../assets/icons/logo_icon_small.svg" type="image/svg+xml">
 
     <script src="https://cdn.jsdelivr.net/npm/hls.js@1.6.7/dist/hls.min.js"></script>
-    <script src="/shared/js/variables.js" ></script>
-    <script src="/shared/js/ui_helper.js" ></script>
-    <script src="/shared/js/api.js" ></script>
-    <script src="/shared/js/header.js" ></script>
-    <script src="/shared/js/config.js" ></script>
+    <script src="../../shared/js/variables.js" ></script>
+    <script src="../../shared/js/ui_helper.js" ></script>
+    <script src="../../shared/js/api.js" ></script>
+    <script src="../../shared/js/header.js" ></script>
+    <script src="../../shared/js/config.js" ></script>
     <script src="./video_list.js" defer ></script>
 </head>
 
 <body onload="initVideoList(), setHeader()"  class="dark_bg">
 <header class="main_header w_full">
     <a aria-label="video page" href="/pages/video_list/index.html">
-        <img src="/assets/icons/logo_icon_small.svg" alt="" srcset="">
-        <img src="/assets/icons/logo_icon.svg" alt="" srcset="">
+        <img src="../../assets/icons/logo_icon_small.svg" alt="" srcset="">
+        <img src="../../assets/icons/logo_icon.svg" alt="" srcset="">
     </a>
     <div id="head_content_right" class="d_flex_cc_gm head_content_right"></div>
 </header>
@@ -62,9 +62,9 @@
     <div id="overlay" class="video-overlay">
         <div class="overlay-content">
             <div class="overlay-header">
-                <img src="/assets/icons/arrow_back.svg"  onclick="closeVideoOverlay()" alt="">
+                <img src="../../assets/icons/arrow_back.svg"  onclick="closeVideoOverlay()" alt="">
                 <h1 id="overlayTitle">Video Titel</h1>
-                <img src="/assets/icons/logo_icon_small.svg" alt="">
+                <img src="../../assets/icons/logo_icon_small.svg" alt="">
 
             </div>
             <div class="video-wrapper">

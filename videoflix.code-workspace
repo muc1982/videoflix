@@ -1,10 +1,11 @@
 {
     "folders": [
         {
-            "path": "."
+            "name": "Videoflix",
+            "path": "frontend"
         }
     ],
     "settings": {
-        "liveServer.settings.root": "/frontend"
+        "liveServer.settings.root": "/"
     }
 }
