@@ -10,6 +10,7 @@ A Django REST Framework backend for a video streaming platform similar to Netfli
 - **Video Streaming**: HLS video streaming with multiple resolutions (480p, 720p, 1080p)
 - **Background Tasks**: Video conversion using Django RQ and FFmpeg
 - **Caching**: Redis-based caching for improved performance
+- **Production Ready**: Gunicorn WSGI server, Whitenoise for static files
 
 ## Tech Stack
 
@@ -18,6 +19,8 @@ A Django REST Framework backend for a video streaming platform similar to Netfli
 - **Cache**: Redis
 - **Task Queue**: Django RQ
 - **Video Processing**: FFmpeg
+- **WSGI Server**: Gunicorn
+- **Static Files**: Whitenoise
 - **Containerization**: Docker & Docker Compose
 
 ## Project Structure
@@ -25,24 +28,40 @@ A Django REST Framework backend for a video streaming platform similar to Netfli
 ```
 videoflix/
 ├── apps/
-│   ├── users/          # User authentication and account management
-│   │   ├── models.py   # Custom user model
-│   │   ├── views.py    # Auth endpoints
-│   │   ├── serializers.py
-│   │   └── urls.py
-│   └── content/        # Video content management
-│       ├── models.py   # Video model
-│       ├── views.py    # Video streaming endpoints
-│       ├── tasks.py    # FFmpeg background tasks
-│       └── signals.py  # Auto video conversion
+│   ├── users/                  # User authentication and account management
+│   │   ├── api/                # DRF API layer
+│   │   │   ├── __init__.py
+│   │   │   ├── serializers.py  # User serializers
+│   │   │   ├── views.py        # Auth endpoints
+│   │   │   └── urls.py         # URL routing
+│   │   ├── models.py           # Custom user model
+│   │   ├── authentication.py   # Cookie JWT auth
+│   │   └── utils.py            # Helper functions
+│   └── content/                # Video content management
+│       ├── api/                # DRF API layer
+│       │   ├── __init__.py
+│       │   ├── serializers.py  # Video serializers
+│       │   ├── views.py        # Video streaming endpoints
+│       │   └── urls.py         # URL routing
+│       ├── models.py           # Video model
+│       ├── tasks.py            # FFmpeg background tasks
+│       └── signals.py          # Auto video conversion
+├── core/                       # Project configuration
+│   ├── __init__.py
+│   ├── settings.py             # Django settings
+│   ├── urls.py                 # Root URL config
+│   ├── wsgi.py                 # WSGI application
+│   └── asgi.py                 # ASGI application
 ├── templates/
-│   └── emails/         # Email templates
-├── static/             # Static assets
-├── media/              # Uploaded files
-├── videoflix/          # Project configuration
-├── docker-compose.yml
+│   └── emails/                 # Email templates
+├── static/                     # Static assets
+├── media/                      # Uploaded files
+├── logs/                       # Application logs
+├── docker-compose.yml          # Development configuration
+├── docker-compose.prod.yml     # Production configuration
 ├── Dockerfile
-└── requirements.txt
+├── requirements.txt
+└── manage.py
 ```
 
 ## Getting Started
@@ -52,7 +71,7 @@ videoflix/
 - Docker Desktop installed
 - Git
 
-### Installation
+### Installation (Development)
 
 1. Clone the repository:
    ```bash
@@ -60,42 +79,72 @@ videoflix/
    cd videoflix
    ```
 
-2. Start the services:
+2. Copy environment file:
+   ```bash
+   cp .env.example .env
+   ```
+
+3. Start the services:
    ```bash
    docker-compose up --build
    ```
 
-3. Create a superuser (in another terminal):
+4. Create a superuser (in another terminal):
    ```bash
    docker-compose exec web python manage.py createsuperuser
    ```
 
-4. Access the application:
+5. Access the application:
    - API: http://localhost:8000/api/
    - Admin: http://localhost:8000/admin/
    - RQ Dashboard: http://localhost:8000/django-rq/
+
+### Installation (Production)
+
+1. Configure the `.env` file with production values:
+   ```bash
+   cp .env.example .env
+   # Edit .env with your production settings
+   ```
+
+2. Start with production configuration:
+   ```bash
+   docker-compose -f docker-compose.prod.yml up --build -d
+   ```
+
+3. Create a superuser:
+   ```bash
+   docker-compose -f docker-compose.prod.yml exec web python manage.py createsuperuser
+   ```
 
 ## API Endpoints
 
 ### Authentication
 
-| Endpoint | Method | Description | Auth Required |
-|----------|--------|-------------|---------------|
-| `/api/register/` | POST | Register new user | No |
-| `/api/activate/<uidb64>/<token>/` | GET | Activate account | No |
-| `/api/login/` | POST | User login | No |
-| `/api/logout/` | POST | User logout | Refresh Token |
-| `/api/token/refresh/` | POST | Refresh access token | Refresh Token |
-| `/api/password_reset/` | POST | Request password reset | No |
-| `/api/password_confirm/<uidb64>/<token>/` | POST | Confirm password reset | No |
+| Endpoint | Method | Description | Status Codes |
+|----------|--------|-------------|--------------|
+| `/api/register/` | POST | Register new user | 201, 400 |
+| `/api/activate/<uidb64>/<token>/` | GET | Activate account | 200, 400 |
+| `/api/login/` | POST | User login | 200, 400 |
+| `/api/logout/` | POST | User logout | 200, 400 |
+| `/api/token/refresh/` | POST | Refresh access token | 200, 400, 401 |
+| `/api/password_reset/` | POST | Request password reset | 200 |
+| `/api/password_confirm/<uidb64>/<token>/` | POST | Confirm password reset | 200, 400 |
 
 ### Video Content
 
-| Endpoint | Method | Description | Auth Required |
-|----------|--------|-------------|---------------|
-| `/api/video/` | GET | List all videos | JWT |
-| `/api/video/<id>/<resolution>/index.m3u8` | GET | HLS manifest | JWT |
-| `/api/video/<id>/<resolution>/<segment>` | GET | HLS segment | JWT |
+| Endpoint | Method | Description | Status Codes |
+|----------|--------|-------------|--------------|
+| `/api/video/` | GET | List all videos | 200, 401, 500 |
+| `/api/video/<id>/<resolution>/index.m3u8` | GET | HLS manifest | 200, 401, 404 |
+| `/api/video/<id>/<resolution>/<segment>` | GET | HLS segment | 200, 401, 404 |
+
+### Legal Pages
+
+| Endpoint | Method | Description | Status Codes |
+|----------|--------|-------------|--------------|
+| `/api/privacy/` | GET | Privacy policy | 200 |
+| `/api/imprint/` | GET | Imprint/Legal notice | 200 |
 
 ## Environment Variables
 

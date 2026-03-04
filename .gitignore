@@ -130,6 +130,10 @@ media/hls/*
 # Static files
 staticfiles/
 
+# Log files
+logs/*.log
+!logs/.gitkeep
+
 # IDE
 .idea/
 .vscode/
