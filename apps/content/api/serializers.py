@@ -5,7 +5,7 @@ This module contains serializers for video data representation.
 """
 from rest_framework import serializers
 
-from .models import Video
+from ..models import Video
 
 
 class VideoSerializer(serializers.ModelSerializer):
