@@ -23,7 +23,7 @@ from .serializers import (
     RegisterSerializer,
     UserSerializer,
 )
-from .utils import (
+from ..utils import (
     delete_jwt_cookies,
     generate_activation_token,
     send_activation_email,
@@ -39,6 +39,10 @@ class RegisterView(APIView):
     API view for user registration.
 
     Creates a new inactive user and sends an activation email.
+
+    Status Codes:
+        201: Benutzer erfolgreich registriert.
+        400: Ungultige Eingabedaten.
     """
 
     permission_classes = [AllowAny]
@@ -75,6 +79,10 @@ class ActivateAccountView(APIView):
     API view for account activation.
 
     Activates a user account using the token from the activation email.
+
+    Status Codes:
+        200: Konto erfolgreich aktiviert.
+        400: Aktivierung fehlgeschlagen.
     """
 
     permission_classes = [AllowAny]
@@ -119,6 +127,10 @@ class LoginView(APIView):
     API view for user login.
 
     Authenticates user and sets JWT tokens as HttpOnly cookies.
+
+    Status Codes:
+        200: Login erfolgreich.
+        400: Ungultige Anmeldedaten.
     """
 
     permission_classes = [AllowAny]
@@ -176,6 +188,10 @@ class LogoutView(APIView):
     API view for user logout.
 
     Blacklists the refresh token and deletes JWT cookies.
+
+    Status Codes:
+        200: Logout erfolgreich.
+        400: Refresh Token fehlt.
     """
 
     permission_classes = [AllowAny]
@@ -218,6 +234,11 @@ class TokenRefreshView(APIView):
     API view for refreshing access tokens.
 
     Issues a new access token using the refresh token from cookies.
+
+    Status Codes:
+        200: Token erfolgreich erneuert.
+        400: Refresh Token fehlt.
+        401: Ungultiger Refresh Token.
     """
 
     permission_classes = [AllowAny]
@@ -274,6 +295,9 @@ class PasswordResetRequestView(APIView):
     API view for password reset request.
 
     Sends a password reset email to the user.
+
+    Status Codes:
+        200: E-Mail gesendet (immer, aus Sicherheitsgrunden).
     """
 
     permission_classes = [AllowAny]
@@ -308,6 +332,10 @@ class PasswordResetConfirmView(APIView):
     API view for password reset confirmation.
 
     Resets the user's password using the token from the email.
+
+    Status Codes:
+        200: Passwort erfolgreich zuruckgesetzt.
+        400: Zurucksetzung fehlgeschlagen.
     """
 
     permission_classes = [AllowAny]

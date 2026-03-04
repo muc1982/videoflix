@@ -1,5 +1,5 @@
 """
-URL routing for the users app.
+URL routing for the users app API.
 
 This module defines all URL patterns for user authentication endpoints.
 """
