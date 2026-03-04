@@ -24,8 +24,14 @@ COPY . .
 # Create media directories
 RUN mkdir -p /app/media/videos /app/media/thumbnails /app/media/hls
 
+# Create logs directory
+RUN mkdir -p /app/logs
+
+# Collect static files
+RUN mkdir -p /app/staticfiles
+
 # Expose port
 EXPOSE 8000
 
-# Default command
-CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]
+# Default command (use gunicorn for production)
+CMD ["gunicorn", "--bind", "0.0.0.0:8000", "--workers", "4", "core.wsgi:application"]

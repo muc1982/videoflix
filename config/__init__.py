@@ -1,1 +1,0 @@
-"""Videoflix project configuration package."""
