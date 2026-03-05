@@ -4,6 +4,7 @@ Utility functions for the users app.
 This module contains helper functions for email sending and token generation.
 """
 
+import logging
 from email.mime.image import MIMEImage
 from pathlib import Path
 
@@ -14,6 +15,8 @@ from django.template.loader import render_to_string
 from django.utils.encoding import force_bytes
 from django.utils.http import urlsafe_base64_encode
 
+logger = logging.getLogger(__name__)
+
 
 def generate_activation_token(user):
     uidb64 = urlsafe_base64_encode(force_bytes(user.pk))
@@ -22,17 +25,29 @@ def generate_activation_token(user):
 
 
 def _attach_inline_logo(msg: EmailMultiAlternatives) -> None:
+    """
+    Attach the Videoflix logo as an inline image for email templates.
+
+    The logo is embedded using Content-ID (CID) which allows HTML emails
+    to reference it via src="cid:videoflix_logo".
+
+    Args:
+        msg: The email message to attach the logo to.
+    """
     logo_path = Path(settings.BASE_DIR) / "static" / "Logo.png"
     if not logo_path.exists():
-        print(f"Logo not found at: {logo_path}")
+        logger.warning(f"Logo not found at: {logo_path}")
         return
 
     with logo_path.open("rb") as f:
         img_data = f.read()
 
     img = MIMEImage(img_data, _subtype="png")
+    # Content-ID must match the cid: reference in HTML (without angle brackets in src)
     img.add_header("Content-ID", "<videoflix_logo>")
+    # Inline disposition ensures the image is displayed in the email body
     img.add_header("Content-Disposition", "inline", filename="Logo.png")
+    # X-Attachment-Id helps some email clients (like Gmail) identify the image
     img.add_header("X-Attachment-Id", "videoflix_logo")
 
     msg.attach(img)  # type: ignore[arg-type]

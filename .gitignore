@@ -140,7 +140,11 @@ logs/*.log
 *.swp
 *.swo
 *~
+*.code-workspace
 
 # OS
 .DS_Store
 Thumbs.db
+
+# Temp files
+cookies.txt
