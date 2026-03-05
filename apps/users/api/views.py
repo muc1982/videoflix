@@ -4,6 +4,9 @@ Views for user authentication and account management.
 This module contains all API views for user registration, login, logout,
 account activation, and password reset functionality.
 """
+
+from typing import Any, Dict, cast
+
 from django.conf import settings
 from django.contrib.auth import authenticate, get_user_model
 from django.contrib.auth.tokens import default_token_generator
@@ -11,18 +14,12 @@ from django.utils.encoding import force_str
 from django.utils.http import urlsafe_base64_decode
 from rest_framework import status
 from rest_framework.permissions import AllowAny
+from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.exceptions import TokenError
+from rest_framework_simplejwt.tokens import RefreshToken
 
-from .serializers import (
-    LoginSerializer,
-    PasswordResetConfirmSerializer,
-    PasswordResetRequestSerializer,
-    RegisterSerializer,
-    UserSerializer,
-)
 from ..utils import (
     delete_jwt_cookies,
     generate_activation_token,
@@ -30,8 +27,20 @@ from ..utils import (
     send_password_reset_email,
     set_jwt_cookies,
 )
+from .serializers import (
+    LoginSerializer,
+    PasswordResetConfirmSerializer,
+    PasswordResetRequestSerializer,
+    RegisterSerializer,
+    UserSerializer,
+)
 
 User = get_user_model()
+
+
+def get_jwt_settings() -> Dict[str, Any]:
+    """Get JWT settings from Django settings."""
+    return getattr(settings, "SIMPLE_JWT", {})
 
 
 class RegisterView(APIView):
@@ -47,7 +56,7 @@ class RegisterView(APIView):
 
     permission_classes = [AllowAny]
 
-    def post(self, request):
+    def post(self, request: Request) -> Response:
         """
         Handle user registration request.
 
@@ -63,14 +72,14 @@ class RegisterView(APIView):
             uidb64, token = generate_activation_token(user)
             send_activation_email(user, uidb64, token)
 
-            return Response({
-                'user': UserSerializer(user).data,
-                'token': token
-            }, status=status.HTTP_201_CREATED)
+            return Response(
+                {"user": UserSerializer(user).data, "token": token},
+                status=status.HTTP_201_CREATED,
+            )
 
         return Response(
             {"detail": "Please check your input and try again."},
-            status=status.HTTP_400_BAD_REQUEST
+            status=status.HTTP_400_BAD_REQUEST,
         )
 
 
@@ -87,7 +96,7 @@ class ActivateAccountView(APIView):
 
     permission_classes = [AllowAny]
 
-    def get(self, request, uidb64, token):
+    def get(self, request: Request, uidb64: str, token: str) -> Response:
         """
         Handle account activation request.
 
@@ -105,7 +114,7 @@ class ActivateAccountView(APIView):
         except (TypeError, ValueError, OverflowError, User.DoesNotExist):
             return Response(
                 {"detail": "Activation failed."},
-                status=status.HTTP_400_BAD_REQUEST
+                status=status.HTTP_400_BAD_REQUEST,
             )
 
         if default_token_generator.check_token(user, token):
@@ -113,12 +122,12 @@ class ActivateAccountView(APIView):
             user.save()
             return Response(
                 {"message": "Account successfully activated."},
-                status=status.HTTP_200_OK
+                status=status.HTTP_200_OK,
             )
 
         return Response(
             {"detail": "Activation failed."},
-            status=status.HTTP_400_BAD_REQUEST
+            status=status.HTTP_400_BAD_REQUEST,
         )
 
 
@@ -135,7 +144,7 @@ class LoginView(APIView):
 
     permission_classes = [AllowAny]
 
-    def post(self, request):
+    def post(self, request: Request) -> Response:
         """
         Handle user login request.
 
@@ -149,36 +158,37 @@ class LoginView(APIView):
         if not serializer.is_valid():
             return Response(
                 {"detail": "Please check your input and try again."},
-                status=status.HTTP_400_BAD_REQUEST
+                status=status.HTTP_400_BAD_REQUEST,
             )
 
-        email = serializer.validated_data['email']
-        password = serializer.validated_data['password']
+        validated_data: Dict[str, Any] = cast(Dict[str, Any], serializer.validated_data)
+        email = validated_data.get("email", "")
+        password = validated_data.get("password", "")
 
-        user = authenticate(request, email=email, password=password)
+        user = authenticate(request._request, email=email, password=password)
 
         if user is None:
             return Response(
                 {"detail": "Please check your input and try again."},
-                status=status.HTTP_400_BAD_REQUEST
+                status=status.HTTP_400_BAD_REQUEST,
             )
 
         if not user.is_active:
             return Response(
                 {"detail": "Please check your input and try again."},
-                status=status.HTTP_400_BAD_REQUEST
+                status=status.HTTP_400_BAD_REQUEST,
             )
 
         refresh = RefreshToken.for_user(user)
         access = refresh.access_token
 
-        response = Response({
-            'detail': 'Login successful',
-            'user': {
-                'id': user.id,
-                'username': user.email
-            }
-        }, status=status.HTTP_200_OK)
+        response = Response(
+            {
+                "detail": "Login successful",
+                "user": {"id": user.pk, "username": user.email},
+            },
+            status=status.HTTP_200_OK,
+        )
 
         return set_jwt_cookies(response, access, refresh)
 
@@ -196,7 +206,7 @@ class LogoutView(APIView):
 
     permission_classes = [AllowAny]
 
-    def post(self, request):
+    def post(self, request: Request) -> Response:
         """
         Handle user logout request.
 
@@ -206,25 +216,21 @@ class LogoutView(APIView):
         Returns:
             Response: Success message (200) or error (400).
         """
-        refresh_token = request.COOKIES.get(
-            settings.SIMPLE_JWT['AUTH_COOKIE_REFRESH']
+        jwt_settings = get_jwt_settings()
+        cookie_name = str(jwt_settings.get("AUTH_COOKIE_REFRESH", "refresh_token"))
+        refresh_token = request.COOKIES.get(cookie_name)
+
+        if refresh_token:
+            try:
+                token = RefreshToken(refresh_token)
+                token.blacklist()
+            except TokenError:
+                pass
+
+        response = Response(
+            {"detail": "Logout successful! All tokens will be deleted."},
+            status=status.HTTP_200_OK,
         )
-
-        if not refresh_token:
-            return Response(
-                {"detail": "Refresh token missing."},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-
-        try:
-            token = RefreshToken(refresh_token)
-            token.blacklist()
-        except TokenError:
-            pass
-
-        response = Response({
-            "detail": "Logout successful! All tokens will be deleted."
-        }, status=status.HTTP_200_OK)
 
         return delete_jwt_cookies(response)
 
@@ -243,7 +249,7 @@ class TokenRefreshView(APIView):
 
     permission_classes = [AllowAny]
 
-    def post(self, request):
+    def post(self, request: Request) -> Response:
         """
         Handle token refresh request.
 
@@ -253,32 +259,32 @@ class TokenRefreshView(APIView):
         Returns:
             Response: New access token (200) or error (400/401).
         """
-        refresh_token = request.COOKIES.get(
-            settings.SIMPLE_JWT['AUTH_COOKIE_REFRESH']
-        )
+        jwt_settings = get_jwt_settings()
+        cookie_name = str(jwt_settings.get("AUTH_COOKIE_REFRESH", "refresh_token"))
+        refresh_token = request.COOKIES.get(cookie_name)
 
         if not refresh_token:
             return Response(
                 {"detail": "Refresh token missing."},
-                status=status.HTTP_400_BAD_REQUEST
+                status=status.HTTP_400_BAD_REQUEST,
             )
 
         try:
             refresh = RefreshToken(refresh_token)
             access = refresh.access_token
 
-            response = Response({
-                'detail': 'Token refreshed',
-                'access': str(access)
-            }, status=status.HTTP_200_OK)
+            response = Response(
+                {"detail": "Token refreshed", "access": str(access)},
+                status=status.HTTP_200_OK,
+            )
 
             response.set_cookie(
-                key=settings.SIMPLE_JWT['AUTH_COOKIE'],
+                key=str(jwt_settings.get("AUTH_COOKIE", "access_token")),
                 value=str(access),
-                httponly=settings.SIMPLE_JWT['AUTH_COOKIE_HTTP_ONLY'],
-                secure=settings.SIMPLE_JWT['AUTH_COOKIE_SECURE'],
-                samesite=settings.SIMPLE_JWT['AUTH_COOKIE_SAMESITE'],
-                path=settings.SIMPLE_JWT['AUTH_COOKIE_PATH'],
+                httponly=bool(jwt_settings.get("AUTH_COOKIE_HTTP_ONLY", True)),
+                secure=bool(jwt_settings.get("AUTH_COOKIE_SECURE", False)),
+                samesite=str(jwt_settings.get("AUTH_COOKIE_SAMESITE", "Lax")),
+                path=str(jwt_settings.get("AUTH_COOKIE_PATH", "/")),
             )
 
             return response
@@ -286,7 +292,7 @@ class TokenRefreshView(APIView):
         except TokenError:
             return Response(
                 {"detail": "Invalid refresh token."},
-                status=status.HTTP_401_UNAUTHORIZED
+                status=status.HTTP_401_UNAUTHORIZED,
             )
 
 
@@ -302,7 +308,7 @@ class PasswordResetRequestView(APIView):
 
     permission_classes = [AllowAny]
 
-    def post(self, request):
+    def post(self, request: Request) -> Response:
         """
         Handle password reset request.
 
@@ -314,7 +320,10 @@ class PasswordResetRequestView(APIView):
         """
         serializer = PasswordResetRequestSerializer(data=request.data)
         if serializer.is_valid():
-            email = serializer.validated_data['email']
+            validated_data: Dict[str, Any] = cast(
+                Dict[str, Any], serializer.validated_data
+            )
+            email = validated_data.get("email", "")
             try:
                 user = User.objects.get(email=email)
                 uidb64, token = generate_activation_token(user)
@@ -322,9 +331,10 @@ class PasswordResetRequestView(APIView):
             except User.DoesNotExist:
                 pass
 
-        return Response({
-            "detail": "An email has been sent to reset your password."
-        }, status=status.HTTP_200_OK)
+        return Response(
+            {"detail": "An email has been sent to reset your password."},
+            status=status.HTTP_200_OK,
+        )
 
 
 class PasswordResetConfirmView(APIView):
@@ -340,7 +350,7 @@ class PasswordResetConfirmView(APIView):
 
     permission_classes = [AllowAny]
 
-    def post(self, request, uidb64, token):
+    def post(self, request: Request, uidb64: str, token: str) -> Response:
         """
         Handle password reset confirmation.
 
@@ -358,24 +368,29 @@ class PasswordResetConfirmView(APIView):
         except (TypeError, ValueError, OverflowError, User.DoesNotExist):
             return Response(
                 {"detail": "Password reset failed."},
-                status=status.HTTP_400_BAD_REQUEST
+                status=status.HTTP_400_BAD_REQUEST,
             )
 
         if not default_token_generator.check_token(user, token):
             return Response(
                 {"detail": "Password reset failed."},
-                status=status.HTTP_400_BAD_REQUEST
+                status=status.HTTP_400_BAD_REQUEST,
             )
 
         serializer = PasswordResetConfirmSerializer(data=request.data)
         if serializer.is_valid():
-            user.set_password(serializer.validated_data['new_password'])
+            validated_data: Dict[str, Any] = cast(
+                Dict[str, Any], serializer.validated_data
+            )
+            new_password = validated_data.get("new_password", "")
+            user.set_password(new_password)
             user.save()
-            return Response({
-                "detail": "Your Password has been successfully reset."
-            }, status=status.HTTP_200_OK)
+            return Response(
+                {"detail": "Your Password has been successfully reset."},
+                status=status.HTTP_200_OK,
+            )
 
         return Response(
             {"detail": "Password reset failed."},
-            status=status.HTTP_400_BAD_REQUEST
+            status=status.HTTP_400_BAD_REQUEST,
         )

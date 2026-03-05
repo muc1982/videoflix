@@ -3,8 +3,9 @@ Custom JWT authentication using HttpOnly cookies.
 
 This module provides cookie-based JWT authentication for the Videoflix API.
 """
-from rest_framework_simplejwt.authentication import JWTAuthentication
+
 from django.conf import settings
+from rest_framework_simplejwt.authentication import JWTAuthentication
 
 
 class CookieJWTAuthentication(JWTAuthentication):
@@ -25,7 +26,7 @@ class CookieJWTAuthentication(JWTAuthentication):
             tuple: (user, validated_token) if authentication succeeds.
             None: If no token is present in cookies.
         """
-        raw_token = request.COOKIES.get(settings.SIMPLE_JWT['AUTH_COOKIE'])
+        raw_token = request.COOKIES.get(settings.SIMPLE_JWT["AUTH_COOKIE"])
 
         if raw_token is None:
             return None
