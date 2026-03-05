@@ -24,16 +24,17 @@ def generate_activation_token(user):
 def _attach_inline_logo(msg: EmailMultiAlternatives) -> None:
     logo_path = Path(settings.BASE_DIR) / "static" / "Logo.png"
     if not logo_path.exists():
+        print(f"Logo not found at: {logo_path}")
         return
 
     with logo_path.open("rb") as f:
-        img = MIMEImage(f.read(), _subtype="png")
+        img_data = f.read()
 
-    # MUST match HTML: cid:videoflix_logo
+    img = MIMEImage(img_data, _subtype="png")
     img.add_header("Content-ID", "<videoflix_logo>")
     img.add_header("Content-Disposition", "inline", filename="Logo.png")
+    img.add_header("X-Attachment-Id", "videoflix_logo")
 
-    # Django runtime supports attaching MIME parts, typing stubs complain -> ignore
     msg.attach(img)  # type: ignore[arg-type]
 
 
@@ -47,14 +48,14 @@ def _send_transactional_email(
         to=[to_email],
     )
 
-    # IMPORTANT: set related BEFORE adding alternatives/attachments
+    # Set subtype to 'related' for inline images
     msg.mixed_subtype = "related"
 
-    # Add HTML alternative
-    msg.attach_alternative(html, "text/html")
-
-    # Attach CID image
+    # Attach inline logo FIRST
     _attach_inline_logo(msg)
+
+    # Then add HTML alternative
+    msg.attach_alternative(html, "text/html")
 
     msg.send(fail_silently=False)
 

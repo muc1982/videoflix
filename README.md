@@ -74,22 +74,26 @@ videoflix/
 ### Installation (Development)
 
 1. Clone the repository:
+
    ```bash
    git clone <repository-url>
    cd videoflix
    ```
 
 2. Copy environment file:
+
    ```bash
    cp .env.example .env
    ```
 
 3. Start the services:
+
    ```bash
    docker-compose up --build
    ```
 
 4. Create a superuser (in another terminal):
+
    ```bash
    docker-compose exec web python manage.py createsuperuser
    ```
@@ -98,16 +102,36 @@ videoflix/
    - API: http://localhost:8000/api/
    - Admin: http://localhost:8000/admin/
    - RQ Dashboard: http://localhost:8000/django-rq/
+   - **Mailhog UI**: http://localhost:8025/ (view sent emails)
+
+### Email Testing with Mailhog
+
+In development mode, emails are sent to Mailhog (a local SMTP testing server). To view sent emails:
+
+1. Open http://localhost:8025/ in your browser
+2. All emails (registration confirmation, password reset) will appear here
+3. Emails include embedded logos using Content-ID (CID) attachments
+
+**Note**: The `.env` file must have the correct Mailhog settings:
+
+```
+EMAIL_BACKEND=django.core.mail.backends.smtp.EmailBackend
+EMAIL_HOST=mailhog
+EMAIL_PORT=1025
+EMAIL_USE_TLS=False
+```
 
 ### Installation (Production)
 
 1. Configure the `.env` file with production values:
+
    ```bash
    cp .env.example .env
    # Edit .env with your production settings
    ```
 
 2. Start with production configuration:
+
    ```bash
    docker-compose -f docker-compose.prod.yml up --build -d
    ```
@@ -121,42 +145,44 @@ videoflix/
 
 ### Authentication
 
-| Endpoint | Method | Description | Status Codes |
-|----------|--------|-------------|--------------|
-| `/api/register/` | POST | Register new user | 201, 400 |
-| `/api/activate/<uidb64>/<token>/` | GET | Activate account | 200, 400 |
-| `/api/login/` | POST | User login | 200, 400 |
-| `/api/logout/` | POST | User logout | 200, 400 |
-| `/api/token/refresh/` | POST | Refresh access token | 200, 400, 401 |
-| `/api/password_reset/` | POST | Request password reset | 200 |
-| `/api/password_confirm/<uidb64>/<token>/` | POST | Confirm password reset | 200, 400 |
+| Endpoint                                  | Method | Description            | Status Codes  |
+| ----------------------------------------- | ------ | ---------------------- | ------------- |
+| `/api/register/`                          | POST   | Register new user      | 201, 400      |
+| `/api/activate/<uidb64>/<token>/`         | GET    | Activate account       | 200, 400      |
+| `/api/login/`                             | POST   | User login             | 200, 400      |
+| `/api/logout/`                            | POST   | User logout            | 200, 400      |
+| `/api/token/refresh/`                     | POST   | Refresh access token   | 200, 400, 401 |
+| `/api/password_reset/`                    | POST   | Request password reset | 200           |
+| `/api/password_confirm/<uidb64>/<token>/` | POST   | Confirm password reset | 200, 400      |
 
 ### Video Content
 
-| Endpoint | Method | Description | Status Codes |
-|----------|--------|-------------|--------------|
-| `/api/video/` | GET | List all videos | 200, 401, 500 |
-| `/api/video/<id>/<resolution>/index.m3u8` | GET | HLS manifest | 200, 401, 404 |
-| `/api/video/<id>/<resolution>/<segment>` | GET | HLS segment | 200, 401, 404 |
+| Endpoint                                  | Method | Description     | Status Codes  |
+| ----------------------------------------- | ------ | --------------- | ------------- |
+| `/api/video/`                             | GET    | List all videos | 200, 401, 500 |
+| `/api/video/<id>/<resolution>/index.m3u8` | GET    | HLS manifest    | 200, 401, 404 |
+| `/api/video/<id>/<resolution>/<segment>`  | GET    | HLS segment     | 200, 401, 404 |
 
 ### Legal Pages
 
-| Endpoint | Method | Description | Status Codes |
-|----------|--------|-------------|--------------|
-| `/api/privacy/` | GET | Privacy policy | 200 |
-| `/api/imprint/` | GET | Imprint/Legal notice | 200 |
+| Endpoint        | Method | Description          | Status Codes |
+| --------------- | ------ | -------------------- | ------------ |
+| `/api/privacy/` | GET    | Privacy policy       | 200          |
+| `/api/imprint/` | GET    | Imprint/Legal notice | 200          |
 
 ## Environment Variables
 
-| Variable | Description | Default |
-|----------|-------------|---------|
-| `DEBUG` | Debug mode | `False` |
-| `SECRET_KEY` | Django secret key | - |
-| `DATABASE_URL` | PostgreSQL connection URL | - |
-| `REDIS_URL` | Redis connection URL | - |
-| `EMAIL_BACKEND` | Email backend class | Console backend |
-| `FRONTEND_URL` | Frontend URL for email links | `http://localhost:5500` |
-| `CORS_ALLOWED_ORIGINS` | Allowed CORS origins | - |
+| Variable               | Description                  | Default                 |
+| ---------------------- | ---------------------------- | ----------------------- |
+| `DEBUG`                | Debug mode                   | `False`                 |
+| `SECRET_KEY`           | Django secret key            | -                       |
+| `DATABASE_URL`         | PostgreSQL connection URL    | -                       |
+| `REDIS_URL`            | Redis connection URL         | -                       |
+| `EMAIL_BACKEND`        | Email backend class          | SMTP backend            |
+| `EMAIL_HOST`           | SMTP server host             | `mailhog` (dev)         |
+| `EMAIL_PORT`           | SMTP server port             | `1025` (dev)            |
+| `FRONTEND_URL`         | Frontend URL for email links | `http://localhost:5500` |
+| `CORS_ALLOWED_ORIGINS` | Allowed CORS origins         | -                       |
 
 ## Video Upload
 
@@ -166,6 +192,33 @@ Videos can be uploaded via the Django Admin interface:
 2. Go to Content > Videos
 3. Add a new video with title, description, category, and video file
 4. The video will automatically be converted to HLS format in the background
+
+### Video Troubleshooting
+
+If videos are not showing up in the frontend:
+
+1. **Check if the RQ Worker is running**:
+
+   ```bash
+   docker-compose logs worker
+   ```
+
+2. **Check if FFmpeg is available**:
+
+   ```bash
+   docker-compose exec web which ffmpeg
+   ```
+
+3. **Check video conversion status in Admin**:
+   - Videos with `hls_ready=True` are visible to users
+   - Use the "Mark as ready" action in Admin to manually enable videos (for testing)
+   - Use the "Trigger HLS conversion" action to retry conversion
+
+4. **View all videos (including non-converted)**:
+   - Add `?all=true` to the video API endpoint: `/api/video/?all=true`
+
+5. **Check RQ Dashboard**:
+   - Visit http://localhost:8000/django-rq/ to see queued/failed jobs
 
 ## Commit History Guidelines
 
