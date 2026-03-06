@@ -166,11 +166,11 @@ SIMPLE_JWT = {
     "AUTH_COOKIE_REFRESH": "refresh_token",
     # In development without HTTPS, Secure must be False for SameSite=None to work
     # In production with HTTPS, set Secure=True
-    "AUTH_COOKIE_SECURE": False if DEBUG else True,
+    "AUTH_COOKIE_SECURE": False,
     "AUTH_COOKIE_HTTP_ONLY": True,
     "AUTH_COOKIE_PATH": "/",
     # Use 'None' for cross-origin requests
-    "AUTH_COOKIE_SAMESITE": "None",
+    "AUTH_COOKIE_SAMESITE": "Lax",
 }
 
 # CORS Configuration
