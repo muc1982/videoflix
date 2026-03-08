@@ -43,11 +43,8 @@ def _attach_inline_logo(msg: EmailMultiAlternatives) -> None:
         img_data = f.read()
 
     img = MIMEImage(img_data, _subtype="png")
-    # Content-ID must match the cid: reference in HTML (without angle brackets in src)
     img.add_header("Content-ID", "<videoflix_logo>")
-    # Inline disposition ensures the image is displayed in the email body
     img.add_header("Content-Disposition", "inline", filename="Logo.png")
-    # X-Attachment-Id helps some email clients (like Gmail) identify the image
     img.add_header("X-Attachment-Id", "videoflix_logo")
 
     msg.attach(img)  # type: ignore[arg-type]
@@ -63,13 +60,8 @@ def _send_transactional_email(
         to=[to_email],
     )
 
-    # Set subtype to 'related' for inline images
     msg.mixed_subtype = "related"
-
-    # Attach inline logo FIRST
     _attach_inline_logo(msg)
-
-    # Then add HTML alternative
     msg.attach_alternative(html, "text/html")
 
     msg.send(fail_silently=False)
@@ -77,7 +69,7 @@ def _send_transactional_email(
 
 def send_activation_email(user, uidb64, token):
     activation_link = (
-        f"{settings.FRONTEND_URL}/frontend/pages/auth/activate.html"
+        f"{settings.FRONTEND_URL}/pages/auth/activate.html"
         f"?uid={uidb64}&token={token}"
     )
 
@@ -97,7 +89,7 @@ def send_activation_email(user, uidb64, token):
 
 def send_password_reset_email(user, uidb64, token):
     reset_link = (
-        f"{settings.FRONTEND_URL}/frontend/pages/auth/confirm_password.html"
+        f"{settings.FRONTEND_URL}/pages/auth/confirm_password.html"
         f"?uid={uidb64}&token={token}"
     )
 
