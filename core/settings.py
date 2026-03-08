@@ -218,7 +218,7 @@ FRONTEND_URL = os.environ.get("FRONTEND_URL", "http://localhost:5500")
 BACKEND_URL = os.environ.get("BACKEND_URL", "http://localhost:8000")
 
 # Video Processing Settings
-VIDEO_RESOLUTIONS = ["480p", "720p", "1080p"]
+VIDEO_RESOLUTIONS = ["480p", "720p", "1080p", "1440p", "4k"]
 FFMPEG_PATH = "/usr/bin/ffmpeg"
 
 # Logging Configuration
