@@ -20,9 +20,11 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 RESOLUTION_CONFIG = {
-    "480p": {"width": 854, "height": 480, "bitrate": "1000k"},
-    "720p": {"width": 1280, "height": 720, "bitrate": "2500k"},
-    "1080p": {"width": 1920, "height": 1080, "bitrate": "5000k"},
+    "480p": {"width": 854, "height": 480, "bitrate": "1500k"},
+    "720p": {"width": 1280, "height": 720, "bitrate": "4000k"},
+    "1080p": {"width": 1920, "height": 1080, "bitrate": "8000k"},
+    "1440p": {"width": 2560, "height": 1440, "bitrate": "12000k"},
+    "4k": {"width": 3840, "height": 2160, "bitrate": "20000k"},
 }
 
 
@@ -101,7 +103,7 @@ def convert_to_resolution(input_path, base_output_dir, resolution, config):
         "-i",
         str(input_path),
         "-vf",
-        f"scale={config['width']}:{config['height']}",
+        f"scale={config['width']}:-2",
         "-c:v",
         "libx264",
         "-preset",
