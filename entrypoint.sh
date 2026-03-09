@@ -27,5 +27,24 @@ python manage.py migrate --noinput
 echo "Collecting static files..."
 python manage.py collectstatic --noinput
 
+# Create superuser automatically if environment variables are set
+if [ -n "$DJANGO_SUPERUSER_EMAIL" ] && [ -n "$DJANGO_SUPERUSER_PASSWORD" ]; then
+    echo "Checking for superuser..."
+    python manage.py shell -c "
+from apps.users.models import CustomUser
+if not CustomUser.objects.filter(email='$DJANGO_SUPERUSER_EMAIL').exists():
+    CustomUser.objects.create_superuser(
+        email='$DJANGO_SUPERUSER_EMAIL',
+        password='$DJANGO_SUPERUSER_PASSWORD'
+    )
+    print('Superuser created successfully!')
+else:
+    print('Superuser already exists.')
+" 2>/dev/null || echo "Superuser creation skipped (may already exist)"
+else
+    echo "No DJANGO_SUPERUSER_EMAIL/PASSWORD set - skipping automatic superuser creation"
+    echo "To create manually: docker-compose exec web python manage.py createsuperuser"
+fi
+
 echo "=== Starting Django server ==="
 exec python manage.py runserver 0.0.0.0:8000

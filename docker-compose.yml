@@ -51,6 +51,10 @@ services:
       - DATABASE_URL=postgres://videoflix_user:videoflix_password@db:5432/videoflix
       - REDIS_URL=redis://redis:6379/0
 
+      # Superuser - automatically created on first startup
+      - DJANGO_SUPERUSER_EMAIL=${DJANGO_SUPERUSER_EMAIL:-admin@videoflix.com}
+      - DJANGO_SUPERUSER_PASSWORD=${DJANGO_SUPERUSER_PASSWORD:-admin123}
+
       # Email - Mailhog for Development
       - EMAIL_BACKEND=${EMAIL_BACKEND:-django.core.mail.backends.smtp.EmailBackend}
       - EMAIL_HOST=${EMAIL_HOST:-mailhog}
