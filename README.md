@@ -1,4 +1,4 @@
-# Videoflix Backend
+"# Videoflix Backend
 
 A Django REST Framework backend for a video streaming platform similar to Netflix.
 
@@ -184,6 +184,7 @@ EMAIL_USE_TLS=False
 | `FRONTEND_URL`         | Frontend URL for email links       | `http://localhost:5500` |
 | `CORS_ALLOWED_ORIGINS` | Allowed CORS origins               | -                       |
 | `CSRF_TRUSTED_ORIGINS` | CSRF trusted origins (Django 4.x+) | -                       |
+| `ALLOWED_HOSTS`        | Allowed host headers               | `localhost,127.0.0.1`   |
 
 ## Video Upload
 
@@ -193,6 +194,18 @@ Videos can be uploaded via the Django Admin interface:
 2. Go to Content > Videos
 3. Add a new video with title, description, category, and video file
 4. The video will automatically be converted to HLS format in the background
+
+### Supported Resolutions
+
+Videos are automatically converted to the following resolutions (if source quality allows):
+
+| Resolution | Width  | Bitrate  |
+| ---------- | ------ | -------- |
+| 480p       | 854px  | 1.5 Mbps |
+| 720p       | 1280px | 4 Mbps   |
+| 1080p      | 1920px | 8 Mbps   |
+| 1440p      | 2560px | 12 Mbps  |
+| 4K         | 3840px | 20 Mbps  |
 
 ### Video Troubleshooting
 
@@ -212,14 +225,24 @@ If videos are not showing up in the frontend:
 
 3. **Check video conversion status in Admin**:
    - Videos with `hls_ready=True` are visible to users
-   - Use the "Mark as ready" action in Admin to manually enable videos (for testing)
-   - Use the "Trigger HLS conversion" action to retry conversion
+   - Use the \"Mark as ready\" action in Admin to manually enable videos (for testing)
+   - Use the \"Trigger HLS conversion\" action to retry conversion
 
 4. **View all videos (including non-converted)**:
    - Add `?all=true` to the video API endpoint: `/api/video/?all=true`
 
 5. **Check RQ Dashboard**:
    - Visit http://localhost:8000/django-rq/ to see queued/failed jobs
+
+## Testing
+
+Run the API endpoint tests:
+
+```bash
+python test_endpoints.py
+```
+
+This script tests all authentication and video endpoints with expected status codes.
 
 ## Commit History Guidelines
 
@@ -230,8 +253,11 @@ Each feature should be committed separately:
 3. `feat: add email verification and password reset`
 4. `feat: add video model and HLS streaming`
 5. `feat: add FFmpeg background tasks for video conversion`
-6. `docs: add README and API documentation`
+6. `feat: add 4K and 1440p video support`
+7. `fix: add CSRF_TRUSTED_ORIGINS for Django 4.x compatibility`
+8. `docs: add README and API documentation`
 
 ## License
 
 This project is for educational purposes only.
+"
