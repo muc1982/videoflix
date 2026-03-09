@@ -138,13 +138,15 @@ def generate_thumbnail(video: "Video", input_path: str) -> None:
     """
     Generate a thumbnail image from the video.
 
-    Extracts a frame from the video at the 5-second mark.
+    Extracts a frame from the video. Tries multiple timestamps to ensure
+    a valid frame is captured even for short videos.
 
     Args:
         video: The Video model instance.
         input_path: Path to the source video file.
     """
     if video.thumbnail:
+        logger.info(f"Video {video.pk} already has a thumbnail, skipping generation")
         return
 
     thumbnail_dir = Path(settings.MEDIA_ROOT) / "thumbnails"
@@ -152,27 +154,39 @@ def generate_thumbnail(video: "Video", input_path: str) -> None:
 
     thumbnail_path = thumbnail_dir / f"{video.pk}.jpg"
 
-    cmd = [
-        settings.FFMPEG_PATH,
-        "-i",
-        str(input_path),
-        "-ss",
-        "00:00:05",
-        "-vframes",
-        "1",
-        "-vf",
-        "scale=640:360",
-        str(thumbnail_path),
-        "-y",
-    ]
+    # Try different timestamps for short videos
+    timestamps = ["00:00:01", "00:00:05", "00:00:00"]
 
-    try:
-        subprocess.run(cmd, capture_output=True, check=True)
-        video.thumbnail.name = f"thumbnails/{video.pk}.jpg"  # type: ignore[union-attr]
-        video.save()
-        logger.info(f"Generated thumbnail for video {video.pk}")
-    except subprocess.CalledProcessError as e:
-        logger.error(f"Thumbnail generation failed: {e.stderr}")
+    for timestamp in timestamps:
+        cmd = [
+            settings.FFMPEG_PATH,
+            "-i",
+            str(input_path),
+            "-ss",
+            timestamp,
+            "-vframes",
+            "1",
+            "-vf",
+            "scale=640:-2",  # Maintain aspect ratio
+            "-q:v",
+            "2",  # High quality JPEG
+            str(thumbnail_path),
+            "-y",
+        ]
+
+        try:
+            subprocess.run(cmd, capture_output=True, text=True, check=True)
+            # Verify the thumbnail was actually created and has content
+            if thumbnail_path.exists() and thumbnail_path.stat().st_size > 0:
+                video.thumbnail.name = f"thumbnails/{video.pk}.jpg"
+                video.save(update_fields=["thumbnail"])
+                logger.info(f"Generated thumbnail for video {video.pk} at {timestamp}")
+                return
+        except subprocess.CalledProcessError as e:
+            logger.warning(f"Thumbnail generation failed at {timestamp}: {e.stderr}")
+            continue
+
+    logger.error(f"Failed to generate thumbnail for video {video.pk} at all timestamps")
 
 
 def delete_hls_files(video_id: int) -> None:
