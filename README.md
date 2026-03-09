@@ -8,6 +8,7 @@ A Django REST Framework backend for a video streaming platform similar to Netfli
 - **Email Verification**: Account activation via email confirmation
 - **Password Reset**: Secure password reset functionality via email
 - **Video Streaming**: HLS video streaming with multiple resolutions (480p, 720p, 1080p, 1440p, 4K)
+- **Automatic Thumbnail Generation**: Thumbnails are auto-generated from videos during upload
 - **Background Tasks**: Video conversion using Django RQ and FFmpeg
 - **Caching**: Redis-based caching for improved performance
 - **Production Ready**: Gunicorn WSGI server, Whitenoise for static files
@@ -23,7 +24,7 @@ A Django REST Framework backend for a video streaming platform similar to Netfli
 - **Static Files**: Whitenoise
 - **Containerization**: Docker & Docker Compose
 
-## Quick Start (3 Steps)
+## Quick Start (2 Steps)
 
 ### Prerequisites
 
@@ -50,15 +51,14 @@ Wait until you see:
 videoflix_web | === Starting Django server ===
 ```
 
-### Step 3: Create Admin User
+**That's it!** A default admin user is automatically created:
 
-Open a new terminal:
+- **Email**: `admin@videoflix.com`
+- **Password**: `admin123`
 
-```bash
-docker-compose exec web python manage.py createsuperuser
-```
+You can customize these credentials by editing the `.env` file before starting.
 
-### Done! Access the application:
+### Access the Application
 
 | Service          | URL                              |
 | ---------------- | -------------------------------- |
@@ -67,11 +67,43 @@ docker-compose exec web python manage.py createsuperuser
 | Mailhog (Emails) | http://localhost:8025/           |
 | RQ Dashboard     | http://localhost:8000/django-rq/ |
 
+### Optional: Custom Superuser
+
+To create a superuser with custom credentials, either:
+
+**Option A**: Set environment variables in `.env` before startup:
+
+```bash
+DJANGO_SUPERUSER_EMAIL=your-email@example.com
+DJANGO_SUPERUSER_PASSWORD=your-secure-password
+```
+
+**Option B**: Create manually after startup:
+
+```bash
+docker-compose exec web python manage.py createsuperuser
+```
+
 ## Troubleshooting
+
+### Windows Users: Line Endings
+
+If you develop on Windows and the project fails on Mac/Linux with errors like "bad interpreter", ensure Git uses correct line endings:
+
+```bash
+# Before cloning (one-time global setting)
+git config --global core.autocrlf input
+
+# Or after cloning, fix line endings
+git add --renormalize .
+git commit -m "Fix line endings"
+```
+
+The `.gitattributes` file in this project should handle this automatically.
 
 ### Mac M1/M2 Users (Mailhog Issue)
 
-If Mailhog fails to start on Apple Silicon, the `platform: linux/amd64` flag in docker-compose.yml should handle this. If issues persist:
+The `platform: linux/amd64` flag in docker-compose.yml ensures Mailhog works on Apple Silicon. If issues persist:
 
 ```bash
 # Remove old containers and rebuild
@@ -98,6 +130,27 @@ docker-compose down -v
 docker-compose up --build
 ```
 
+### Video List Empty After Login
+
+If the video list API returns an empty array:
+
+1. **Check if videos exist**: Go to Admin Panel > Content > Videos
+2. **Check HLS ready status**: Videos must have `hls_ready=True` to appear
+3. **Trigger conversion manually**:
+   - In Admin, select videos and use "Trigger HLS conversion" action
+   - Or use "Mark as ready" for testing
+4. **Check worker is running**: `docker-compose logs worker`
+
+### Worker Not Processing Videos
+
+```bash
+# Check worker status
+docker-compose logs worker
+
+# Restart worker
+docker-compose restart worker
+```
+
 ## Project Structure
 
 ```
@@ -110,7 +163,8 @@ videoflix/
 │   └── content/                # Video content
 │       ├── api/                # Video streaming endpoints
 │       ├── models.py           # Video model
-│       └── tasks.py            # FFmpeg conversion
+│       ├── signals.py          # Auto video processing
+│       └── tasks.py            # FFmpeg conversion & thumbnails
 ├── core/                       # Django settings
 ├── templates/emails/           # Email templates
 ├── static/                     # Static assets (Logo)
@@ -139,11 +193,12 @@ videoflix/
 
 ### Video Content
 
-| Endpoint                                  | Method | Description     | Status Codes  |
-| ----------------------------------------- | ------ | --------------- | ------------- |
-| `/api/video/`                             | GET    | List all videos | 200, 401, 500 |
-| `/api/video/<id>/<resolution>/index.m3u8` | GET    | HLS manifest    | 200, 404      |
-| `/api/video/<id>/<resolution>/<segment>`  | GET    | HLS segment     | 200, 404      |
+| Endpoint                                  | Method | Description                           | Status Codes  |
+| ----------------------------------------- | ------ | ------------------------------------- | ------------- |
+| `/api/video/`                             | GET    | List all videos                       | 200, 401, 500 |
+| `/api/video/?all=true`                    | GET    | List ALL videos (including not ready) | 200, 401, 500 |
+| `/api/video/<id>/<resolution>/index.m3u8` | GET    | HLS manifest                          | 200, 404      |
+| `/api/video/<id>/<resolution>/<segment>`  | GET    | HLS segment                           | 200, 404      |
 
 ### Legal Pages
 
@@ -154,30 +209,36 @@ videoflix/
 
 ## Environment Variables
 
-| Variable               | Description             | Default                 |
-| ---------------------- | ----------------------- | ----------------------- |
-| `DEBUG`                | Debug mode              | `True`                  |
-| `SECRET_KEY`           | Django secret key       | auto-generated          |
-| `DATABASE_URL`         | PostgreSQL URL          | (set in docker-compose) |
-| `REDIS_URL`            | Redis URL               | (set in docker-compose) |
-| `EMAIL_HOST`           | SMTP host               | `mailhog`               |
-| `EMAIL_PORT`           | SMTP port               | `1025`                  |
-| `FRONTEND_URL`         | Frontend URL for emails | `http://localhost:5500` |
-| `CORS_ALLOWED_ORIGINS` | Allowed CORS origins    | (see .env.example)      |
-| `CSRF_TRUSTED_ORIGINS` | CSRF trusted origins    | (see .env.example)      |
+| Variable                    | Description              | Default                 |
+| --------------------------- | ------------------------ | ----------------------- |
+| `DEBUG`                     | Debug mode               | `True`                  |
+| `SECRET_KEY`                | Django secret key        | auto-generated          |
+| `DATABASE_URL`              | PostgreSQL URL           | (set in docker-compose) |
+| `REDIS_URL`                 | Redis URL                | (set in docker-compose) |
+| `DJANGO_SUPERUSER_EMAIL`    | Auto-created admin email | `admin@videoflix.com`   |
+| `DJANGO_SUPERUSER_PASSWORD` | Auto-created admin pass  | `admin123`              |
+| `EMAIL_HOST`                | SMTP host                | `mailhog`               |
+| `EMAIL_PORT`                | SMTP port                | `1025`                  |
+| `FRONTEND_URL`              | Frontend URL for emails  | `http://localhost:5500` |
+| `CORS_ALLOWED_ORIGINS`      | Allowed CORS origins     | (see .env.example)      |
+| `CSRF_TRUSTED_ORIGINS`      | CSRF trusted origins     | (see .env.example)      |
 
 ## Video Upload & Streaming
 
 ### Upload via Admin
 
 1. Go to http://localhost:8000/admin/
-2. Navigate to **Content > Videos**
-3. Click **Add Video**
-4. Fill in title, description, category
-5. Upload a video file (MP4 recommended)
-6. Save
+2. Login with admin credentials
+3. Navigate to **Content > Videos**
+4. Click **Add Video**
+5. Fill in title, description, category
+6. Upload a video file (MP4 recommended)
+7. Save
 
-The video will automatically be converted to HLS format in the background.
+The video will automatically be:
+
+- Converted to HLS format in multiple resolutions
+- Have a thumbnail generated from the first seconds
 
 ### Supported Resolutions
 
@@ -194,6 +255,7 @@ The video will automatically be converted to HLS format in the background.
 - Visit http://localhost:8000/django-rq/ to see queued jobs
 - Videos with `hls_ready=True` are visible to users
 - Use Admin action "Mark as ready" for testing
+- Thumbnails are auto-generated; no manual upload needed
 
 ## Email Testing with Mailhog
 
