@@ -50,8 +50,15 @@ class VideoListView(APIView):
 
             if show_all:
                 videos = Video.objects.all().order_by("-created_at")
+                logger.info(f"Returning ALL videos (count: {videos.count()})")
             else:
                 videos = Video.objects.filter(hls_ready=True).order_by("-created_at")
+                total_videos = Video.objects.count()
+                ready_videos = videos.count()
+                logger.info(
+                    f"Video list requested. Total: {total_videos}, "
+                    f"HLS Ready: {ready_videos}"
+                )
 
             serializer = VideoSerializer(
                 videos, many=True, context={"request": request}
