@@ -7,7 +7,7 @@ A Django REST Framework backend for a video streaming platform similar to Netfli
 - **User Authentication**: Registration, login, logout with JWT tokens stored in HttpOnly cookies
 - **Email Verification**: Account activation via email confirmation
 - **Password Reset**: Secure password reset functionality via email
-- **Video Streaming**: HLS video streaming with multiple resolutions (480p, 720p, 1080p)
+- **Video Streaming**: HLS video streaming with multiple resolutions (480p, 720p, 1080p, 1440p, 4K)
 - **Background Tasks**: Video conversion using Django RQ and FFmpeg
 - **Caching**: Redis-based caching for improved performance
 - **Production Ready**: Gunicorn WSGI server, Whitenoise for static files
@@ -172,17 +172,18 @@ EMAIL_USE_TLS=False
 
 ## Environment Variables
 
-| Variable               | Description                  | Default                 |
-| ---------------------- | ---------------------------- | ----------------------- |
-| `DEBUG`                | Debug mode                   | `False`                 |
-| `SECRET_KEY`           | Django secret key            | -                       |
-| `DATABASE_URL`         | PostgreSQL connection URL    | -                       |
-| `REDIS_URL`            | Redis connection URL         | -                       |
-| `EMAIL_BACKEND`        | Email backend class          | SMTP backend            |
-| `EMAIL_HOST`           | SMTP server host             | `mailhog` (dev)         |
-| `EMAIL_PORT`           | SMTP server port             | `1025` (dev)            |
-| `FRONTEND_URL`         | Frontend URL for email links | `http://localhost:5500` |
-| `CORS_ALLOWED_ORIGINS` | Allowed CORS origins         | -                       |
+| Variable               | Description                        | Default                 |
+| ---------------------- | ---------------------------------- | ----------------------- |
+| `DEBUG`                | Debug mode                         | `False`                 |
+| `SECRET_KEY`           | Django secret key                  | -                       |
+| `DATABASE_URL`         | PostgreSQL connection URL          | -                       |
+| `REDIS_URL`            | Redis connection URL               | -                       |
+| `EMAIL_BACKEND`        | Email backend class                | SMTP backend            |
+| `EMAIL_HOST`           | SMTP server host                   | `mailhog` (dev)         |
+| `EMAIL_PORT`           | SMTP server port                   | `1025` (dev)            |
+| `FRONTEND_URL`         | Frontend URL for email links       | `http://localhost:5500` |
+| `CORS_ALLOWED_ORIGINS` | Allowed CORS origins               | -                       |
+| `CSRF_TRUSTED_ORIGINS` | CSRF trusted origins (Django 4.x+) | -                       |
 
 ## Video Upload
 
