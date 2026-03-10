@@ -128,27 +128,62 @@ SIMPLE_JWT = {
     "AUTH_HEADER_TYPES": ("Bearer",),
     "AUTH_COOKIE": "access_token",
     "AUTH_COOKIE_REFRESH": "refresh_token",
-    "AUTH_COOKIE_SECURE": False,
+    "AUTH_COOKIE_SECURE": True,
     "AUTH_COOKIE_HTTP_ONLY": True,
     "AUTH_COOKIE_PATH": "/",
-    "AUTH_COOKIE_SAMESITE": "Lax",
+    "AUTH_COOKIE_SAMESITE": "None",
 }
 
 # Frontend/Backend URLs
 FRONTEND_URL = os.environ.get("FRONTEND_URL", "http://localhost:5500")
 BACKEND_URL = os.environ.get("BACKEND_URL", "http://localhost:8000")
 
-# CORS - Only Live Server port 5500
+# CORS - All common frontend development ports
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:5500",
     "http://127.0.0.1:5500",
+    "http://localhost:5501",
+    "http://127.0.0.1:5501",
+    "http://localhost:5502",
+    "http://127.0.0.1:5502",
+    "http://localhost:5503",
+    "http://127.0.0.1:5503",
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+    "http://localhost:4200",
+    "http://127.0.0.1:4200",
+    "http://localhost:8080",
+    "http://127.0.0.1:8080",
 ]
 CORS_ALLOW_CREDENTIALS = True
+CORS_ALLOW_HEADERS = [
+    "accept",
+    "accept-encoding",
+    "authorization",
+    "content-type",
+    "dnt",
+    "origin",
+    "user-agent",
+    "x-csrftoken",
+    "x-requested-with",
+]
 
 # CSRF
 CSRF_TRUSTED_ORIGINS = [
     "http://localhost:5500",
     "http://127.0.0.1:5500",
+    "http://localhost:5501",
+    "http://127.0.0.1:5501",
+    "http://localhost:5502",
+    "http://127.0.0.1:5502",
+    "http://localhost:5503",
+    "http://127.0.0.1:5503",
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+    "http://localhost:4200",
+    "http://127.0.0.1:4200",
+    "http://localhost:8080",
+    "http://127.0.0.1:8080",
     "http://localhost:8000",
     "http://127.0.0.1:8000",
 ]
@@ -167,13 +202,11 @@ CACHES = {
     }
 }
 
-# Email
-EMAIL_BACKEND = os.environ.get(
-    "EMAIL_BACKEND", "django.core.mail.backends.smtp.EmailBackend"
-)
-EMAIL_HOST = os.environ.get("EMAIL_HOST", "mailhog")
-EMAIL_PORT = int(os.environ.get("EMAIL_PORT", 1025))
-EMAIL_USE_TLS = os.environ.get("EMAIL_USE_TLS", "False").lower() == "true"
+# Email - SMTP (configure your own provider in .env)
+EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+EMAIL_HOST = os.environ.get("EMAIL_HOST", "smtp.gmail.com")
+EMAIL_PORT = int(os.environ.get("EMAIL_PORT", 587))
+EMAIL_USE_TLS = os.environ.get("EMAIL_USE_TLS", "True").lower() == "true"
 EMAIL_HOST_USER = os.environ.get("EMAIL_HOST_USER", "")
 EMAIL_HOST_PASSWORD = os.environ.get("EMAIL_HOST_PASSWORD", "")
 DEFAULT_FROM_EMAIL = os.environ.get(
