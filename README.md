@@ -6,7 +6,7 @@ A Django REST Framework backend for a video streaming platform similar to Netfli
 >
 > The frontend is configured to use `127.0.0.1:8000` for API calls. Using `localhost` will cause authentication errors (403 Forbidden).
 >
-> ✅ Correct: `http://127.0.0.1:5500/`  
+> ✅ Correct: `http://127.0.0.1:5500/`
 > ❌ Wrong: `http://localhost:5500/`
 
 ## Features
@@ -49,8 +49,10 @@ cp .env.example .env
 
 ```bash
 # If your frontend runs on port 5501:
-
 FRONTEND_URL=http://127.0.0.1:5501
+
+# If your frontend runs on port 5500:
+FRONTEND_URL=http://127.0.0.1:5500
 ```
 
 Then open the frontend in your browser using `127.0.0.1`:
@@ -142,16 +144,16 @@ Both `localhost` and `127.0.0.1` are supported for all ports.
 
 ## Troubleshooting
 
-### 403 Forbidden / Cookies Not Sent
+### 403 Forbidden / Access Token Error
 
-If API calls return `403 Forbidden` after login:
+If you get "Given token not valid for any token type" or 403 errors:
 
 **The frontend uses `127.0.0.1:8000` for API calls.** You MUST access the frontend via `127.0.0.1`, not `localhost`:
 
 | Browser URL              | Works? |
 | ------------------------ | ------ |
-| `http://127.0.0.1:5501/` | ✅ Yes |
-| `http://localhost:5501/` | ❌ No  |
+| `http://127.0.0.1:5500/` | ✅ Yes |
+| `http://localhost:5500/` | ❌ No  |
 
 **Why?** `localhost` and `127.0.0.1` are treated as different domains by browsers. Cookies set for one won't be sent to the other.
 
@@ -186,15 +188,7 @@ If `/api/video/` returns an empty array:
 
 1. **Check Admin Panel**: Go to Content > Videos - do videos exist?
 2. **Check HLS status**: Videos need `hls_ready=True` to appear
-3. **Check Worker**: `docker-compose logs worker`
-4. **Manual fix**: Admin > Videos > Select > "Mark as ready"
-
-### Worker Not Processing Videos
-
-```bash
-docker-compose logs worker
-docker-compose restart worker
-```
+3. **Manual fix**: Admin > Videos > Select > "Mark as ready"
 
 ## API Endpoints
 
@@ -229,7 +223,7 @@ docker-compose restart worker
 
 ### Upload via Admin
 
-1. Go to http://localhost:8000/admin/
+1. Go to http://127.0.0.1:8000/admin/
 2. Login with admin credentials
 3. Navigate to **Content > Videos**
 4. Click **Add Video**
@@ -251,7 +245,7 @@ The video will automatically be:
 
 ### Check Conversion Status
 
-- Visit http://localhost:8000/django-rq/ to see queued jobs
+- Visit http://127.0.0.1:8000/django-rq/ to see queued jobs
 - Videos with `hls_ready=True` appear in the API
 - Thumbnails are auto-generated
 
@@ -261,7 +255,7 @@ The video will automatically be:
 | --------------------------- | ------------------------ | ----------------------- |
 | `DJANGO_SUPERUSER_EMAIL`    | Auto-created admin email | `admin@videoflix.com`   |
 | `DJANGO_SUPERUSER_PASSWORD` | Auto-created admin pass  | `admin123`              |
-| `FRONTEND_URL`              | Frontend URL for emails  | `http://localhost:5500` |
+| `FRONTEND_URL`              | Frontend URL for emails  | `http://127.0.0.1:5500` |
 
 ## Project Structure
 
@@ -282,9 +276,8 @@ videoflix/
 ├── static/                 # Static assets
 ├── media/                  # Uploaded videos
 ├── docker-compose.yml      # Docker configuration
-├── Dockerfile              # Container definition
+├── .Dockerfile             # Container definition
 ├── entrypoint.sh           # Web server startup script
-├── entrypoint-worker.sh    # Worker startup script
 └── requirements.txt        # Python dependencies
 ```
 
