@@ -20,7 +20,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY . .
 
 # Make entrypoint scripts executable
-RUN chmod +x /app/entrypoint.sh /app/entrypoint-worker.sh 2>/dev/null || true
+RUN chmod +x /app/entrypoint.sh
 
 # Set environment variables
 ENV PYTHONDONTWRITEBYTECODE=1
