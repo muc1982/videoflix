@@ -23,8 +23,6 @@ RESOLUTION_CONFIG = {
     "480p": {"width": 854, "height": 480, "bitrate": "1500k"},
     "720p": {"width": 1280, "height": 720, "bitrate": "4000k"},
     "1080p": {"width": 1920, "height": 1080, "bitrate": "8000k"},
-    "1440p": {"width": 2560, "height": 1440, "bitrate": "12000k"},
-    "4k": {"width": 3840, "height": 2160, "bitrate": "20000k"},
 }
 
 
@@ -49,7 +47,6 @@ def convert_video_to_hls(video_id: int) -> None:
     input_path = video.video_file.path
     base_output_dir = Path(settings.MEDIA_ROOT) / "hls" / str(video.pk)
 
-    # Track successful conversions
     successful_conversions = []
     failed_conversions = []
 
@@ -127,8 +124,11 @@ def convert_to_resolution(input_path, base_output_dir, resolution, config):
     ]
 
     try:
-        subprocess.run(cmd, capture_output=True, text=True, check=True)
+        subprocess.run(cmd, capture_output=True, text=True, check=True, timeout=1800)
         logger.info(f"Converted to {resolution}: {output_path}")
+    except subprocess.TimeoutExpired:
+        logger.error(f"FFmpeg timeout for {resolution} (exceeded 30 minutes)")
+        raise
     except subprocess.CalledProcessError as e:
         logger.error(f"FFmpeg error for {resolution}: {e.stderr}")
         raise
@@ -153,8 +153,6 @@ def generate_thumbnail(video: "Video", input_path: str) -> None:
     thumbnail_dir.mkdir(parents=True, exist_ok=True)
 
     thumbnail_path = thumbnail_dir / f"{video.pk}.jpg"
-
-    # Try different timestamps for short videos
     timestamps = ["00:00:01", "00:00:05", "00:00:00"]
 
     for timestamp in timestamps:
@@ -167,16 +165,15 @@ def generate_thumbnail(video: "Video", input_path: str) -> None:
             "-vframes",
             "1",
             "-vf",
-            "scale=640:-2",  # Maintain aspect ratio
+            "scale=640:-2",
             "-q:v",
-            "2",  # High quality JPEG
+            "2",
             str(thumbnail_path),
             "-y",
         ]
 
         try:
             subprocess.run(cmd, capture_output=True, text=True, check=True)
-            # Verify the thumbnail was actually created and has content
             if thumbnail_path.exists() and thumbnail_path.stat().st_size > 0:
                 video.thumbnail.name = f"thumbnails/{video.pk}.jpg"
                 video.save(update_fields=["thumbnail"])

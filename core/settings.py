@@ -164,12 +164,9 @@ SIMPLE_JWT = {
     "AUTH_HEADER_TYPES": ("Bearer",),
     "AUTH_COOKIE": "access_token",
     "AUTH_COOKIE_REFRESH": "refresh_token",
-    # In development without HTTPS, Secure must be False for SameSite=None to work
-    # In production with HTTPS, set Secure=True
     "AUTH_COOKIE_SECURE": False,
     "AUTH_COOKIE_HTTP_ONLY": True,
     "AUTH_COOKIE_PATH": "/",
-    # Use 'None' for cross-origin requests
     "AUTH_COOKIE_SAMESITE": "Lax",
 }
 
@@ -224,7 +221,7 @@ FRONTEND_URL = os.environ.get("FRONTEND_URL", "http://localhost:5500")
 BACKEND_URL = os.environ.get("BACKEND_URL", "http://localhost:8000")
 
 # Video Processing Settings
-VIDEO_RESOLUTIONS = ["480p", "720p", "1080p", "1440p", "4k"]
+VIDEO_RESOLUTIONS = ["480p", "720p", "1080p"]
 FFMPEG_PATH = "/usr/bin/ffmpeg"
 
 # Logging Configuration
