@@ -172,7 +172,31 @@ The video will automatically be:
 | `DJANGO_SUPERUSER_EMAIL`    | Auto-created admin email | `admin@videoflix.com`   |
 | `DJANGO_SUPERUSER_PASSWORD` | Auto-created admin pass  | `admin123`              |
 | `FRONTEND_URL`              | Frontend URL for emails  | `http://localhost:5500` |
-| `CORS_ALLOWED_ORIGINS`      | Allowed CORS origins     | (see .env.example)      |
+
+## Project Structure
+
+```
+videoflix/
+├── apps/
+│   ├── users/              # User authentication
+│   │   ├── api/            # REST API endpoints
+│   │   ├── models.py       # Custom user model
+│   │   └── utils.py        # Email helpers
+│   └── content/            # Video content
+│       ├── api/            # Video streaming endpoints
+│       ├── models.py       # Video model
+│       ├── signals.py      # Auto video processing
+│       └── tasks.py        # FFmpeg conversion & thumbnails
+├── core/                   # Django settings
+├── templates/emails/       # Email templates
+├── static/                 # Static assets
+├── media/                  # Uploaded videos
+├── docker-compose.yml      # Docker configuration
+├── Dockerfile              # Container definition
+├── entrypoint.sh           # Web server startup script
+├── entrypoint-worker.sh    # Worker startup script
+└── requirements.txt        # Python dependencies
+```
 
 ## License
 

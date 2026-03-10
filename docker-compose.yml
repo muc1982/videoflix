@@ -8,8 +8,6 @@ services:
       POSTGRES_PASSWORD: videoflix_password
     volumes:
       - postgres_data:/var/lib/postgresql/data
-    ports:
-      - "5432:5432"
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U videoflix_user -d videoflix"]
       interval: 5s
@@ -19,8 +17,6 @@ services:
   redis:
     image: redis:7-alpine
     container_name: videoflix_redis
-    ports:
-      - "6379:6379"
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 5s
@@ -39,6 +35,8 @@ services:
     build: .
     container_name: videoflix_web
     command: /app/entrypoint.sh
+    env_file:
+      - .env
     volumes:
       - .:/app
       - media_data:/app/media
@@ -46,29 +44,10 @@ services:
     ports:
       - "8000:8000"
     environment:
-      - DEBUG=True
-      - SECRET_KEY=${SECRET_KEY:-django-insecure-dev-key-change-in-production}
       - DATABASE_URL=postgres://videoflix_user:videoflix_password@db:5432/videoflix
       - REDIS_URL=redis://redis:6379/0
-
-      # Superuser - automatically created on first startup
-      - DJANGO_SUPERUSER_EMAIL=${DJANGO_SUPERUSER_EMAIL:-admin@videoflix.com}
-      - DJANGO_SUPERUSER_PASSWORD=${DJANGO_SUPERUSER_PASSWORD:-admin123}
-
-      # Email - Mailhog for Development
-      - EMAIL_BACKEND=${EMAIL_BACKEND:-django.core.mail.backends.smtp.EmailBackend}
-      - EMAIL_HOST=${EMAIL_HOST:-mailhog}
-      - EMAIL_PORT=${EMAIL_PORT:-1025}
-      - EMAIL_USE_TLS=${EMAIL_USE_TLS:-False}
-      - EMAIL_HOST_USER=${EMAIL_HOST_USER:-}
-      - EMAIL_HOST_PASSWORD=${EMAIL_HOST_PASSWORD:-}
-      - DEFAULT_FROM_EMAIL=${DEFAULT_FROM_EMAIL:-Videoflix <info@Videoflix.com>}
-
-      - FRONTEND_URL=${FRONTEND_URL:-http://localhost:5500}
-      - BACKEND_URL=${BACKEND_URL:-http://localhost:8000}
-      - ALLOWED_HOSTS=localhost,127.0.0.1,0.0.0.0
-      - CORS_ALLOWED_ORIGINS=http://localhost:5500,http://127.0.0.1:5500,http://localhost:5501,http://127.0.0.1:5501
-      - CSRF_TRUSTED_ORIGINS=http://localhost:5500,http://127.0.0.1:5500,http://localhost:5501,http://127.0.0.1:5501,http://localhost:8000,http://127.0.0.1:8000
+      - EMAIL_HOST=mailhog
+      - EMAIL_PORT=1025
     depends_on:
       db:
         condition: service_healthy
@@ -81,12 +60,12 @@ services:
     build: .
     container_name: videoflix_worker
     command: /app/entrypoint-worker.sh
+    env_file:
+      - .env
     volumes:
       - .:/app
       - media_data:/app/media
     environment:
-      - DEBUG=True
-      - SECRET_KEY=${SECRET_KEY:-django-insecure-dev-key-change-in-production}
       - DATABASE_URL=postgres://videoflix_user:videoflix_password@db:5432/videoflix
       - REDIS_URL=redis://redis:6379/0
     depends_on:
