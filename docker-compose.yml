@@ -24,7 +24,9 @@ services:
       retries: 5
 
   web:
-    build: .
+    build:
+      context: .
+      dockerfile: .Dockerfile
     container_name: videoflix_web
     command: /app/entrypoint.sh
     env_file:
@@ -35,24 +37,6 @@ services:
       - static_data:/app/staticfiles
     ports:
       - "8000:8000"
-    environment:
-      - DATABASE_URL=postgres://videoflix_user:videoflix_password@db:5432/videoflix
-      - REDIS_URL=redis://redis:6379/0
-    depends_on:
-      db:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-
-  worker:
-    build: .
-    container_name: videoflix_worker
-    command: /app/entrypoint-worker.sh
-    env_file:
-      - .env
-    volumes:
-      - .:/app
-      - media_data:/app/media
     environment:
       - DATABASE_URL=postgres://videoflix_user:videoflix_password@db:5432/videoflix
       - REDIS_URL=redis://redis:6379/0
