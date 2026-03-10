@@ -154,6 +154,19 @@ If you get "Given token not valid for any token type" or 403 errors:
 
 **Why?** `localhost` and `127.0.0.1` are treated as different domains by browsers. Cookies set for one won't be sent to the other.
 
+### Before Testing: Clear Browser Data
+
+Before testing the application, clear your browser's cookies and cache to avoid authentication issues:
+
+**Chrome:**
+
+1. Press `F12` to open Developer Tools
+2. Go to **Application** → **Cookies**
+3. Right-click on `127.0.0.1` and select **Clear**
+4. Refresh the page
+
+**Or use Incognito/Private Mode** for a fresh session.
+
 ### Email Links Point to Wrong Port
 
 If activation or password reset links point to the wrong port:
