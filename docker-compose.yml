@@ -23,14 +23,6 @@ services:
       timeout: 5s
       retries: 5
 
-  mailhog:
-    image: mailhog/mailhog:latest
-    platform: linux/amd64
-    container_name: videoflix_mailhog
-    ports:
-      - "8025:8025"
-      - "1025:1025"
-
   web:
     build: .
     container_name: videoflix_web
@@ -46,15 +38,11 @@ services:
     environment:
       - DATABASE_URL=postgres://videoflix_user:videoflix_password@db:5432/videoflix
       - REDIS_URL=redis://redis:6379/0
-      - EMAIL_HOST=mailhog
-      - EMAIL_PORT=1025
     depends_on:
       db:
         condition: service_healthy
       redis:
         condition: service_healthy
-      mailhog:
-        condition: service_started
 
   worker:
     build: .
