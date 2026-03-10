@@ -36,6 +36,18 @@ cd videoflix
 cp .env.example .env
 ```
 
+**Important:** Edit `.env` and set `FRONTEND_URL` to match your frontend port:
+
+```bash
+# If your frontend runs on port 5501:
+FRONTEND_URL=http://localhost:5501
+
+# If your frontend runs on port 5500:
+FRONTEND_URL=http://localhost:5500
+```
+
+This URL is used for email activation and password reset links!
+
 ### Step 2: Start Services
 
 ```bash
@@ -55,12 +67,36 @@ videoflix_web | === Starting Django server ===
 
 ### Access the Application
 
-| Service          | URL                              |
-| ---------------- | -------------------------------- |
-| API              | http://localhost:8000/api/       |
-| Admin            | http://localhost:8000/admin/     |
-| Mailhog (Emails) | http://localhost:8025/           |
-| RQ Dashboard     | http://localhost:8000/django-rq/ |
+| Service      | URL                              |
+| ------------ | -------------------------------- |
+| API          | http://localhost:8000/api/       |
+| Admin        | http://localhost:8000/admin/     |
+| RQ Dashboard | http://localhost:8000/django-rq/ |
+
+### Email Configuration (Required!)
+
+Configure your own SMTP provider in `.env` to send real emails:
+
+```bash
+EMAIL_HOST=smtp.example.com
+EMAIL_PORT=587
+EMAIL_USE_TLS=True
+EMAIL_HOST_USER=your-email@example.com
+EMAIL_HOST_PASSWORD=your-password-or-app-password
+DEFAULT_FROM_EMAIL=Videoflix <your-email@example.com>
+```
+
+**Common SMTP Settings:**
+
+| Provider | EMAIL_HOST          | EMAIL_PORT | EMAIL_USE_TLS |
+| -------- | ------------------- | ---------- | ------------- |
+| Gmail    | smtp.gmail.com      | 587        | True          |
+| GMX      | mail.gmx.net        | 587        | True          |
+| Web.de   | smtp.web.de         | 587        | True          |
+| Outlook  | smtp.office365.com  | 587        | True          |
+| Yahoo    | smtp.mail.yahoo.com | 587        | True          |
+
+**Note:** Some providers (Gmail, Yahoo) require an App Password instead of your regular password.
 
 ### Optional: Custom Superuser
 
@@ -77,7 +113,37 @@ Or create manually after startup:
 docker-compose exec web python manage.py createsuperuser
 ```
 
+## Supported Frontend Ports (CORS)
+
+The backend is configured to accept requests from the following frontend origins:
+
+| Framework / Tool    | Ports                  |
+| ------------------- | ---------------------- |
+| VS Code Live Server | 5500, 5501, 5502, 5503 |
+| React               | 3000                   |
+| Angular             | 4200                   |
+| Vue                 | 8080                   |
+
+Both `localhost` and `127.0.0.1` are supported for all ports.
+
+**Note for examiners**: If you need to use a different port, add it to `CORS_ALLOWED_ORIGINS` and `CSRF_TRUSTED_ORIGINS` in `core/settings.py`.
+
 ## Troubleshooting
+
+### Email Links Point to Wrong Port
+
+If activation or password reset links point to the wrong port (e.g., `localhost:5500` instead of `localhost:5501`):
+
+1. Edit `.env` file
+2. Change `FRONTEND_URL` to match your frontend port:
+   ```bash
+   FRONTEND_URL=http://localhost:5501
+   ```
+3. Restart Docker:
+   ```bash
+   docker-compose down
+   docker-compose up
+   ```
 
 ### Windows Users: Line Endings
 
@@ -88,15 +154,6 @@ git config --global core.autocrlf input
 ```
 
 The `.gitattributes` file handles this automatically.
-
-### Mac M1/M2 Users (Mailhog Issue)
-
-The `platform: linux/amd64` flag ensures Mailhog works on Apple Silicon:
-
-```bash
-docker-compose down -v
-docker-compose up --build
-```
 
 ### Video List Empty After Login
 
@@ -118,22 +175,30 @@ docker-compose restart worker
 
 ### Authentication
 
-| Endpoint                       | Method | Description            |
-| ------------------------------ | ------ | ---------------------- |
-| `/api/register/`               | POST   | Register new user      |
-| `/api/activate/<uid>/<token>/` | GET    | Activate account       |
-| `/api/login/`                  | POST   | User login             |
-| `/api/logout/`                 | POST   | User logout            |
-| `/api/token/refresh/`          | POST   | Refresh JWT token      |
-| `/api/password_reset/`         | POST   | Request password reset |
+| Endpoint                               | Method | Description            |
+| -------------------------------------- | ------ | ---------------------- |
+| `/api/register/`                       | POST   | Register new user      |
+| `/api/activate/<uid>/<token>/`         | GET    | Activate account       |
+| `/api/login/`                          | POST   | User login             |
+| `/api/logout/`                         | POST   | User logout            |
+| `/api/token/refresh/`                  | POST   | Refresh JWT token      |
+| `/api/password_reset/`                 | POST   | Request password reset |
+| `/api/password_confirm/<uid>/<token>/` | POST   | Confirm new password   |
 
 ### Video Content
 
-| Endpoint                                  | Method | Description             |
-| ----------------------------------------- | ------ | ----------------------- |
-| `/api/video/`                             | GET    | List all ready videos   |
-| `/api/video/?all=true`                    | GET    | List ALL videos (debug) |
-| `/api/video/<id>/<resolution>/index.m3u8` | GET    | HLS manifest            |
+| Endpoint                                  | Method | Description           |
+| ----------------------------------------- | ------ | --------------------- |
+| `/api/video/`                             | GET    | List all ready videos |
+| `/api/video/<id>/<resolution>/index.m3u8` | GET    | HLS manifest          |
+| `/api/video/<id>/<resolution>/<segment>`  | GET    | HLS video segment     |
+
+### Legal
+
+| Endpoint        | Method | Description    |
+| --------------- | ------ | -------------- |
+| `/api/privacy/` | GET    | Privacy policy |
+| `/api/imprint/` | GET    | Imprint        |
 
 ## Video Upload & Processing
 
