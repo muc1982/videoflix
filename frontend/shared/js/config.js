@@ -1,9 +1,10 @@
 /**
  * The base URL for all API requests.
- * Typically points to your backend server's API root.
+ * Dynamically uses the same hostname as the current page to ensure cookies work correctly.
+ * This fixes the issue where localhost and 127.0.0.1 are treated as different origins.
  * @constant {string}
  */
-const API_BASE_URL = 'http://127.0.0.1:8000/api/';
+const API_BASE_URL = `http://${window.location.hostname}:8000/api/`;
 
 /**
  * Relative path for the login endpoint.
