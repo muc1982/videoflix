@@ -49,10 +49,8 @@ cp .env.example .env
 
 ```bash
 # If your frontend runs on port 5501:
-FRONTEND_URL=http://127.0.0.1:5501
 
-# If your frontend runs on port 5500:
-FRONTEND_URL=http://127.0.0.1:5500
+FRONTEND_URL=http://127.0.0.1:5501
 ```
 
 Then open the frontend in your browser using `127.0.0.1`:
