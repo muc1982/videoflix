@@ -48,17 +48,14 @@ cp .env.example .env
 **You MUST use `127.0.0.1` (not `localhost`)** because the frontend uses `127.0.0.1` for API calls:
 
 ```bash
-# If your frontend runs on port 5501:
-FRONTEND_URL=http://127.0.0.1:5501
-
-# If your frontend runs on port 5500:
+# Default port 5500 (VS Code Live Server)
 FRONTEND_URL=http://127.0.0.1:5500
 ```
 
 Then open the frontend in your browser using `127.0.0.1`:
 
-- ✅ `http://127.0.0.1:5501/`
-- ❌ `http://localhost:5501/` (will cause authentication issues)
+- ✅ `http://127.0.0.1:5500/`
+- ❌ `http://localhost:5500/` (will cause authentication issues)
 
 ### Step 2: Start Services
 
@@ -157,14 +154,14 @@ If you get "Given token not valid for any token type" or 403 errors:
 
 **Why?** `localhost` and `127.0.0.1` are treated as different domains by browsers. Cookies set for one won't be sent to the other.
 
-### Email Links Point to Wrong Hostname
+### Email Links Point to Wrong Port
 
-If activation or password reset links don't work:
+If activation or password reset links point to the wrong port:
 
 1. Edit `.env` file
-2. Use `127.0.0.1` (not `localhost`):
+2. Set `FRONTEND_URL` to match your frontend port:
    ```bash
-   FRONTEND_URL=http://127.0.0.1:5501
+   FRONTEND_URL=http://127.0.0.1:5500
    ```
 3. Restart Docker:
    ```bash
