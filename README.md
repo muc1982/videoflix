@@ -2,6 +2,13 @@
 
 A Django REST Framework backend for a video streaming platform similar to Netflix.
 
+> ⚠️ **IMPORTANT: Always use `127.0.0.1` in your browser, NOT `localhost`!**
+>
+> The frontend is configured to use `127.0.0.1:8000` for API calls. Using `localhost` will cause authentication errors (403 Forbidden).
+>
+> ✅ Correct: `http://127.0.0.1:5500/`  
+> ❌ Wrong: `http://localhost:5500/`
+
 ## Features
 
 - **User Authentication**: Registration, login, logout with JWT tokens stored in HttpOnly cookies
@@ -36,17 +43,22 @@ cd videoflix
 cp .env.example .env
 ```
 
-**Important:** Edit `.env` and set `FRONTEND_URL` to match your frontend port:
+**Important:** Edit `.env` and set `FRONTEND_URL` to match your frontend port.
+
+**You MUST use `127.0.0.1` (not `localhost`)** because the frontend uses `127.0.0.1` for API calls:
 
 ```bash
 # If your frontend runs on port 5501:
-FRONTEND_URL=http://localhost:5501
+FRONTEND_URL=http://127.0.0.1:5501
 
 # If your frontend runs on port 5500:
-FRONTEND_URL=http://localhost:5500
+FRONTEND_URL=http://127.0.0.1:5500
 ```
 
-This URL is used for email activation and password reset links!
+Then open the frontend in your browser using `127.0.0.1`:
+
+- ✅ `http://127.0.0.1:5501/`
+- ❌ `http://localhost:5501/` (will cause authentication issues)
 
 ### Step 2: Start Services
 
@@ -69,9 +81,11 @@ videoflix_web | === Starting Django server ===
 
 | Service      | URL                              |
 | ------------ | -------------------------------- |
-| API          | http://localhost:8000/api/       |
-| Admin        | http://localhost:8000/admin/     |
-| RQ Dashboard | http://localhost:8000/django-rq/ |
+| API          | http://127.0.0.1:8000/api/       |
+| Admin        | http://127.0.0.1:8000/admin/     |
+| RQ Dashboard | http://127.0.0.1:8000/django-rq/ |
+
+**Important:** Always use `127.0.0.1` instead of `localhost` in the browser!
 
 ### Email Configuration (Required!)
 
@@ -130,14 +144,27 @@ Both `localhost` and `127.0.0.1` are supported for all ports.
 
 ## Troubleshooting
 
-### Email Links Point to Wrong Port
+### 403 Forbidden / Cookies Not Sent
 
-If activation or password reset links point to the wrong port (e.g., `localhost:5500` instead of `localhost:5501`):
+If API calls return `403 Forbidden` after login:
+
+**The frontend uses `127.0.0.1:8000` for API calls.** You MUST access the frontend via `127.0.0.1`, not `localhost`:
+
+| Browser URL              | Works? |
+| ------------------------ | ------ |
+| `http://127.0.0.1:5501/` | ✅ Yes |
+| `http://localhost:5501/` | ❌ No  |
+
+**Why?** `localhost` and `127.0.0.1` are treated as different domains by browsers. Cookies set for one won't be sent to the other.
+
+### Email Links Point to Wrong Hostname
+
+If activation or password reset links don't work:
 
 1. Edit `.env` file
-2. Change `FRONTEND_URL` to match your frontend port:
+2. Use `127.0.0.1` (not `localhost`):
    ```bash
-   FRONTEND_URL=http://localhost:5501
+   FRONTEND_URL=http://127.0.0.1:5501
    ```
 3. Restart Docker:
    ```bash
