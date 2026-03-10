@@ -46,6 +46,26 @@ services:
       redis:
         condition: service_healthy
 
+  worker:
+    build:
+      context: .
+      dockerfile: .Dockerfile
+    container_name: videoflix_worker
+    command: python manage.py rqworker default
+    env_file:
+      - .env
+    volumes:
+      - .:/app
+      - media_data:/app/media
+    environment:
+      - DATABASE_URL=postgres://videoflix_user:videoflix_password@db:5432/videoflix
+      - REDIS_URL=redis://redis:6379/0
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
 volumes:
   postgres_data:
   media_data:
