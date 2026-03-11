@@ -117,6 +117,7 @@ REST_FRAMEWORK = {
     ],
     "DEFAULT_PERMISSION_CLASSES": ["rest_framework.permissions.IsAuthenticated"],
     "DEFAULT_RENDERER_CLASSES": ["rest_framework.renderers.JSONRenderer"],
+    "EXCEPTION_HANDLER": "core.exception_handler.custom_exception_handler",
 }
 
 SIMPLE_JWT = {
@@ -128,18 +129,20 @@ SIMPLE_JWT = {
     "AUTH_HEADER_TYPES": ("Bearer",),
     "AUTH_COOKIE": "access_token",
     "AUTH_COOKIE_REFRESH": "refresh_token",
-    "AUTH_COOKIE_SECURE": False,
+    "AUTH_COOKIE_SECURE": os.environ.get("AUTH_COOKIE_SECURE", "False").lower()
+    == "true",
     "AUTH_COOKIE_HTTP_ONLY": True,
     "AUTH_COOKIE_PATH": "/",
-    "AUTH_COOKIE_SAMESITE": "Lax",
+    "AUTH_COOKIE_SAMESITE": os.environ.get("AUTH_COOKIE_SAMESITE", "Lax"),
 }
 
 # Frontend/Backend URLs
-FRONTEND_URL = os.environ.get("FRONTEND_URL", "http://localhost:5500")
-BACKEND_URL = os.environ.get("BACKEND_URL", "http://localhost:8000")
+FRONTEND_URL = os.environ.get("FRONTEND_URL", "http://127.0.0.1:5500")
+BACKEND_URL = os.environ.get("BACKEND_URL", "http://127.0.0.1:8000")
 
-# CORS - All common frontend development ports
-CORS_ALLOWED_ORIGINS = [
+# CORS Configuration - loaded from environment
+# Default origins if CORS_ALLOWED_ORIGINS not set in .env
+DEFAULT_CORS_ORIGINS = [
     "http://localhost:5500",
     "http://127.0.0.1:5500",
     "http://localhost:5501",
@@ -155,6 +158,16 @@ CORS_ALLOWED_ORIGINS = [
     "http://localhost:8080",
     "http://127.0.0.1:8080",
 ]
+
+# Parse CORS_ALLOWED_ORIGINS from .env (comma-separated)
+_cors_origins_env = os.environ.get("CORS_ALLOWED_ORIGINS", "")
+if _cors_origins_env:
+    CORS_ALLOWED_ORIGINS = [
+        origin.strip() for origin in _cors_origins_env.split(",") if origin.strip()
+    ]
+else:
+    CORS_ALLOWED_ORIGINS = DEFAULT_CORS_ORIGINS
+
 CORS_ALLOW_CREDENTIALS = True
 CORS_ALLOW_HEADERS = [
     "accept",
@@ -168,25 +181,17 @@ CORS_ALLOW_HEADERS = [
     "x-requested-with",
 ]
 
-# CSRF
-CSRF_TRUSTED_ORIGINS = [
-    "http://localhost:5500",
-    "http://127.0.0.1:5500",
-    "http://localhost:5501",
-    "http://127.0.0.1:5501",
-    "http://localhost:5502",
-    "http://127.0.0.1:5502",
-    "http://localhost:5503",
-    "http://127.0.0.1:5503",
-    "http://localhost:3000",
-    "http://127.0.0.1:3000",
-    "http://localhost:4200",
-    "http://127.0.0.1:4200",
-    "http://localhost:8080",
-    "http://127.0.0.1:8080",
-    "http://localhost:8000",
-    "http://127.0.0.1:8000",
-]
+# CSRF Configuration - loaded from environment
+_csrf_origins_env = os.environ.get("CSRF_TRUSTED_ORIGINS", "")
+if _csrf_origins_env:
+    CSRF_TRUSTED_ORIGINS = [
+        origin.strip() for origin in _csrf_origins_env.split(",") if origin.strip()
+    ]
+else:
+    CSRF_TRUSTED_ORIGINS = DEFAULT_CORS_ORIGINS + [
+        "http://localhost:8000",
+        "http://127.0.0.1:8000",
+    ]
 
 # Redis
 REDIS_URL = os.environ.get("REDIS_URL", "redis://localhost:6379/0")
