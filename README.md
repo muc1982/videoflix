@@ -4,7 +4,7 @@ A Django REST Framework backend for a video streaming platform similar to Netfli
 
 > ⚠️ **IMPORTANT: Always use `127.0.0.1` in your browser, NOT `localhost`!**
 >
-> The frontend is configured to use `127.0.0.1:8000` for API calls. Using `localhost` will cause authentication errors (403 Forbidden).
+> The frontend is configured to use `127.0.0.1:8000` for API calls. Using `localhost` will cause authentication errors.
 >
 > ✅ Correct: `http://127.0.0.1:5500/`
 > ❌ Wrong: `http://localhost:5500/`
@@ -126,7 +126,7 @@ docker-compose exec web python manage.py createsuperuser
 
 ## Supported Frontend Ports (CORS)
 
-The backend is configured to accept requests from the following frontend origins:
+The backend is configured to accept requests from the following frontend origins by default:
 
 | Framework / Tool    | Ports                  |
 | ------------------- | ---------------------- |
@@ -137,13 +137,18 @@ The backend is configured to accept requests from the following frontend origins
 
 Both `localhost` and `127.0.0.1` are supported for all ports.
 
-**Note for examiners**: If you need to use a different port, add it to `CORS_ALLOWED_ORIGINS` and `CSRF_TRUSTED_ORIGINS` in `core/settings.py`.
+**Custom CORS Origins:** You can set custom origins in `.env`:
+
+```bash
+CORS_ALLOWED_ORIGINS=http://127.0.0.1:5500,http://127.0.0.1:5501,http://127.0.0.1:6000
+CSRF_TRUSTED_ORIGINS=http://127.0.0.1:5500,http://127.0.0.1:5501,http://127.0.0.1:6000
+```
 
 ## Troubleshooting
 
-### 403 Forbidden / Access Token Error
+### 401 Unauthorized / Access Token Error
 
-If you get "Given token not valid for any token type" or 403 errors:
+If you get "Authentication credentials were not provided" or 401 errors:
 
 **The frontend uses `127.0.0.1:8000` for API calls.** You MUST access the frontend via `127.0.0.1`, not `localhost`:
 
@@ -204,30 +209,30 @@ If `/api/video/` returns an empty array:
 
 ### Authentication
 
-| Endpoint                               | Method | Description            |
-| -------------------------------------- | ------ | ---------------------- |
-| `/api/register/`                       | POST   | Register new user      |
-| `/api/activate/<uid>/<token>/`         | GET    | Activate account       |
-| `/api/login/`                          | POST   | User login             |
-| `/api/logout/`                         | POST   | User logout            |
-| `/api/token/refresh/`                  | POST   | Refresh JWT token      |
-| `/api/password_reset/`                 | POST   | Request password reset |
-| `/api/password_confirm/<uid>/<token>/` | POST   | Confirm new password   |
+| Endpoint                               | Method | Description            | Status Codes  |
+| -------------------------------------- | ------ | ---------------------- | ------------- |
+| `/api/register/`                       | POST   | Register new user      | 201, 400      |
+| `/api/activate/<uid>/<token>/`         | GET    | Activate account       | 200, 400      |
+| `/api/login/`                          | POST   | User login             | 200, 400      |
+| `/api/logout/`                         | POST   | User logout            | 200           |
+| `/api/token/refresh/`                  | POST   | Refresh JWT token      | 200, 400, 401 |
+| `/api/password_reset/`                 | POST   | Request password reset | 200           |
+| `/api/password_confirm/<uid>/<token>/` | POST   | Confirm new password   | 200, 400      |
 
 ### Video Content
 
-| Endpoint                                  | Method | Description           |
-| ----------------------------------------- | ------ | --------------------- |
-| `/api/video/`                             | GET    | List all ready videos |
-| `/api/video/<id>/<resolution>/index.m3u8` | GET    | HLS manifest          |
-| `/api/video/<id>/<resolution>/<segment>`  | GET    | HLS video segment     |
+| Endpoint                                  | Method | Description           | Status Codes  |
+| ----------------------------------------- | ------ | --------------------- | ------------- |
+| `/api/video/`                             | GET    | List all ready videos | 200, 401      |
+| `/api/video/<id>/<resolution>/index.m3u8` | GET    | HLS manifest          | 200, 401, 404 |
+| `/api/video/<id>/<resolution>/<segment>`  | GET    | HLS video segment     | 200, 401, 404 |
 
 ### Legal
 
-| Endpoint        | Method | Description    |
-| --------------- | ------ | -------------- |
-| `/api/privacy/` | GET    | Privacy policy |
-| `/api/imprint/` | GET    | Imprint        |
+| Endpoint        | Method | Description    | Status Codes |
+| --------------- | ------ | -------------- | ------------ |
+| `/api/privacy/` | GET    | Privacy policy | 200          |
+| `/api/imprint/` | GET    | Imprint        | 200          |
 
 ## Video Upload & Processing
 
@@ -261,34 +266,62 @@ The video will automatically be:
 
 ## Environment Variables
 
-| Variable                    | Description              | Default                 |
-| --------------------------- | ------------------------ | ----------------------- |
-| `DJANGO_SUPERUSER_EMAIL`    | Auto-created admin email | `admin@videoflix.com`   |
-| `DJANGO_SUPERUSER_PASSWORD` | Auto-created admin pass  | `admin123`              |
-| `FRONTEND_URL`              | Frontend URL for emails  | `http://127.0.0.1:5500` |
+| Variable                    | Description                  | Default                 |
+| --------------------------- | ---------------------------- | ----------------------- |
+| `DEBUG`                     | Enable debug mode            | `False`                 |
+| `SECRET_KEY`                | Django secret key            | (required)              |
+| `DATABASE_URL`              | PostgreSQL connection string | (required)              |
+| `REDIS_URL`                 | Redis connection string      | (required)              |
+| `FRONTEND_URL`              | Frontend URL for email links | `http://127.0.0.1:5500` |
+| `BACKEND_URL`               | Backend URL                  | `http://127.0.0.1:8000` |
+| `DJANGO_SUPERUSER_EMAIL`    | Auto-created admin email     | `admin@videoflix.com`   |
+| `DJANGO_SUPERUSER_PASSWORD` | Auto-created admin pass      | `admin123`              |
+| `CORS_ALLOWED_ORIGINS`      | Comma-separated CORS origins | (defaults in settings)  |
+| `CSRF_TRUSTED_ORIGINS`      | Comma-separated CSRF origins | (defaults in settings)  |
+| `EMAIL_HOST`                | SMTP server host             | (required)              |
+| `EMAIL_PORT`                | SMTP server port             | `587`                   |
+| `EMAIL_USE_TLS`             | Use TLS for email            | `True`                  |
+| `EMAIL_HOST_USER`           | SMTP username                | (required)              |
+| `EMAIL_HOST_PASSWORD`       | SMTP password                | (required)              |
 
 ## Project Structure
 
 ```
 videoflix/
 ├── apps/
-│   ├── users/              # User authentication
-│   │   ├── api/            # REST API endpoints
-│   │   ├── models.py       # Custom user model
-│   │   └── utils.py        # Email helpers
-│   └── content/            # Video content
-│       ├── api/            # Video streaming endpoints
-│       ├── models.py       # Video model
-│       ├── signals.py      # Auto video processing
-│       └── tasks.py        # FFmpeg conversion & thumbnails
-├── core/                   # Django settings
-├── templates/emails/       # Email templates
-├── static/                 # Static assets
-├── media/                  # Uploaded videos
-├── docker-compose.yml      # Docker configuration
-├── .Dockerfile             # Container definition
-├── entrypoint.sh           # Web server startup script
-└── requirements.txt        # Python dependencies
+│   ├── users/                    # User authentication
+│   │   ├── api/                  # REST API endpoints
+│   │   │   ├── serializers.py    # Request/response serializers
+│   │   │   ├── urls.py           # URL routing
+│   │   │   └── views.py          # API views
+│   │   ├── authentication.py     # Cookie JWT authentication
+│   │   ├── backends.py           # Email authentication backend
+│   │   ├── models.py             # Custom user model
+│   │   └── utils.py              # Email helpers
+│   └── content/                  # Video content
+│       ├── api/                  # Video streaming endpoints
+│       │   ├── serializers.py    # Video serializers
+│       │   ├── urls.py           # URL routing
+│       │   └── views.py          # HLS streaming views
+│       ├── admin.py              # Admin configuration
+│       ├── models.py             # Video model
+│       ├── signals.py            # Auto video processing
+│       └── tasks.py              # FFmpeg conversion & thumbnails
+├── core/                         # Django configuration
+│   ├── exception_handler.py      # Custom 401 response handler
+│   ├── settings.py               # Django settings
+│   ├── urls.py                   # Root URL configuration
+│   └── wsgi.py                   # WSGI application
+├── templates/emails/             # Email templates
+├── static/                       # Static assets
+├── media/                        # Uploaded videos
+├── docker-compose.yml            # Docker configuration
+├── .Dockerfile                   # Container definition
+├── entrypoint.sh                 # Web server startup script
+├── requirements.txt              # Python dependencies
+├── .env.example                  # Environment template
+├── .gitattributes                # Git line ending config
+└── README.md                     # This file
 ```
 
 ## License
