@@ -6,6 +6,7 @@ This module registers the Video model in the Django admin.
 
 import django_rq
 from django.contrib import admin, messages
+from django.utils.html import mark_safe
 
 from .models import Video
 from .tasks import convert_video_to_hls, generate_thumbnail
@@ -37,10 +38,10 @@ class VideoAdmin(admin.ModelAdmin):
     def thumbnail_preview(self, obj):
         """Show thumbnail preview in admin."""
         if obj.thumbnail:
-            return f'<img src="{obj.thumbnail.url}" style="max-height: 100px;" />'
+            return mark_safe(
+                f'<img src="{obj.thumbnail.url}" style="max-height: 100px;" />'
+            )
         return "No thumbnail"
-
-    thumbnail_preview.allow_tags = True
 
     @admin.action(description="Trigger HLS conversion for selected videos")
     def trigger_hls_conversion(self, request, queryset):
